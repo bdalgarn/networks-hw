@@ -15,6 +15,11 @@ using namespace std;
 
 int main(int argc, char * argv[]){
 
+  if (argc != 2) exit(1);
+
+  int port_number = atoi(argv[1]);
+
+  server server(port_number);
 
 
 }
