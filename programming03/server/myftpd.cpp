@@ -7,19 +7,74 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <time.h>
-#include <sys/time.h>
+#include <sys/time.h>  
 #include "server.h"
 
+
 using namespace std;
+
+#define MAX_LINE = 256
 
 
 int main(int argc, char * argv[]){
 
   if (argc != 2) exit(1);
 
+  charbuf[MAX_LINE];
+
   int port_number = atoi(argv[1]);
+  int len;
 
-  server server(port_number);
+  bzero((char *)&sin, sizeof(sin));
+  sin.sin_family = AF_INET;
+  sin.sin_addr.s_addr = htonl(INADDR_ANY); //Use the default IP address of server                                            
+  sin.sin_port = htons(port_number);
+
+  if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    perror("simplex-talk:       socket");
+    exit(1);
+  }
+
+  if    ((setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)& opt, sizeof(int)))<0){
+    perror      ("simplex-talk:setscokt");
+    exit(1);
+  }
+
+  if    ((bind(s,(struct sockaddr*)&sin, sizeof(sin))) < 0) {
+    perror("simplex-talk:       bind");
+    exit(1);
+  }
+
+  if    ((listen(s, 10))<0){
+    perror("simplex-talk:       listen");
+    exit(1);
+  }
 
 
+
+  while(1){
+    if((new_s=accept(server.s,(struct sockaddr*)&(server.sin),&len))<0){
+      perror("simplex-talk:accept");
+      exit(1);
+    }
+
+  }
+
+  while(1){
+    if((len=recv(new_s,buf,sizeof(buf),0))==-1){
+      perror("ServerReceivedError!");
+      exit(1);}
+    if(len==0)break;
+    printf("TCPServerReceived:%s",buf);
+  }
 }
+
+
+int dwld(string fileName, int nameLen);
+int upld(string fileName, int nameLen);
+int delf(string fileName, int nameLen);
+int list();
+int mdir(string dirName, int nameLen);
+int rdir(string dirName, int nameLen);
+int cdir(string dirName, int nameLen);
+int quit();
