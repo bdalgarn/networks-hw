@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -13,17 +14,25 @@
 
 using namespace std;
 
-#define MAX_LINE = 256
+#define MAX_LINE 256
 
 
 int main(int argc, char * argv[]){
 
-  if (argc != 2) exit(1);
+  if (argc != 2){
+    cout << "here" << endl;
+    exit(1);
+    
+  }
+  struct sockaddr_in sin;
 
-  charbuf[MAX_LINE];
+  char buf[MAX_LINE];
 
   int port_number = atoi(argv[1]);
+  cout << port_number << endl;
   int len;
+  int s, new_s;
+  int opt = 1;
 
   bzero((char *)&sin, sizeof(sin));
   sin.sin_family = AF_INET;
@@ -45,7 +54,7 @@ int main(int argc, char * argv[]){
     exit(1);
   }
 
-  if    ((listen(s, 10))<0){
+  if    ((listen(s, 1))<0){
     perror("simplex-talk:       listen");
     exit(1);
   }
@@ -53,14 +62,11 @@ int main(int argc, char * argv[]){
 
 
   while(1){
-    if((new_s=accept(server.s,(struct sockaddr*)&(server.sin),&len))<0){
+    if((new_s=accept(s,(struct sockaddr*)&sin, (socklen_t *)&len))<0){
       perror("simplex-talk:accept");
       exit(1);
     }
 
-  }
-
-  while(1){
     if((len=recv(new_s,buf,sizeof(buf),0))==-1){
       perror("ServerReceivedError!");
       exit(1);}
@@ -69,12 +75,11 @@ int main(int argc, char * argv[]){
   }
 }
 
-
-int dwld(string fileName, int nameLen);
-int upld(string fileName, int nameLen);
-int delf(string fileName, int nameLen);
-int list();
-int mdir(string dirName, int nameLen);
-int rdir(string dirName, int nameLen);
-int cdir(string dirName, int nameLen);
-int quit();
+int dwld(string fileName, int nameLen){}
+int upld(string fileName, int nameLen){}
+int delf(string fileName, int nameLen){}
+int list(){}
+int mdir(string dirName, int nameLen){}
+int rdir(string dirName, int nameLen){}
+int cdir(string dirName, int nameLen){}
+int quit(){}

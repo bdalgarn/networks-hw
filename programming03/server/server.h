@@ -10,8 +10,11 @@
 #include <time.h>
 #include <sys/time.h>
 
+using namespace std;
+
 #ifndef SERVER_H
 #define SERVER_H
+
 
 int dwld(string, int);
 int upld(string, int);
