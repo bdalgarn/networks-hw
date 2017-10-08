@@ -16,7 +16,6 @@ using namespace std;
 
 #define MAX_LINE 256
 
-
 int main(int argc, char * argv[]){
 
   if (argc != 2){
@@ -66,42 +65,34 @@ int main(int argc, char * argv[]){
       perror("simplex-talk:accept");
       exit(1);
     }
-
-    if((len=recv(new_s,buf,sizeof(buf),0))==-1){
-      perror("ServerReceivedError!");
-      exit(1);}
-    if(len==0)break;
-    parseOperation(buf, MAX_LINE);
+    // Receives from client until "QUIT" is called 
+    int cont = 1;
+    while (cont) {
+    	if((len=recv(new_s,buf,sizeof(buf),0))==-1){
+      	perror("ServerReceivedError!");
+      	exit(1);}
+    	if(len==0)break;
+	printf("TCPServerReceived:%s", buf);
+    	if (!strncmp(buf, "DWLD", 4)) {
+    	}
+    	else if (!strncmp(buf, "UPLD ", 4)) {
+    	}
+    	else if (!strncmp(buf, "DELF", 4)) {
+    	}
+    	else if (!strncmp(buf, "LIST", 4)) {
+    	}
+    	else if (!strncmp(buf, "MDIR", 4)) {
+   	}
+    	else if (!strncmp(buf, "RDIR", 4)) {
+ 	}
+    	else if (!strncmp(buf, "CDIR", 4)) {
+    	}
+    	else if (!strncmp(buf, "QUIT", 4)) {
+		// Close sockets
+		cont = 0;
+    	}
+    }
   }
-}
-
-void parseOperation(char *buffer, int buf_len) {
-    printf("TCPServerReceived:%s", buffer);
-    if (!strncmp(buffer, "DWLD ", 5)) {
-        printf("Download\n");
-    }
-    else if (!strncmp(buffer, "UPLD ", 5)) {
-	dwld(buffer, buf_len);
-    }
-    else if (!strncmp(buffer, "DELF ", 5)) {
-	upld(buffer, buf_len);
-    }
-    else if (!strncmp(buffer, "LIST", 4)) {
-	list();
-    }
-    else if (!strncmp(buffer, "MDIR ", 5)) {
-	mdir(buffer, buf_len);
-    }
-    else if (!strncmp(buffer, "RDIR ", 5)) {
-	rdir(buffer, buf_len);
-    }
-    else if (!strncmp(buffer, "CDIR ", 5)) {
-	cdir(buffer, buf_len);
-    }
-    else if (!strncmp(buffer, "QUIT", 4)) {
-	quit();
-    }
-    return;
 }
 
 void dwld(char *buffer, int buf_len){}
