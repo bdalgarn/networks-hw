@@ -15,14 +15,15 @@ using namespace std;
 #ifndef SERVER_H
 #define SERVER_H
 
+void parseOperation(char *, int);
 
-int dwld(string, int);
-int upld(string, int);
-int delf(string, int);
-int list();
-int mdir(string, int);
-int rdir(string, int);
-int cdir(string, int);
-int quit();
+void dwld(char *, int);
+void upld(char *, int);
+void delf(char *, int);
+void list();
+void mdir(char *, int);
+void rdir(char *, int);
+void cdir(char *, int);
+void quit();
 
 #endif

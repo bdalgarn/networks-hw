@@ -71,15 +71,47 @@ int main(int argc, char * argv[]){
       perror("ServerReceivedError!");
       exit(1);}
     if(len==0)break;
-    printf("TCPServerReceived:%s",buf);
+    parseOperation(buf, MAX_LINE);
   }
 }
 
-int dwld(string fileName, int nameLen){}
-int upld(string fileName, int nameLen){}
-int delf(string fileName, int nameLen){}
-int list(){}
-int mdir(string dirName, int nameLen){}
-int rdir(string dirName, int nameLen){}
-int cdir(string dirName, int nameLen){}
-int quit(){}
+void parseOperation(char *buffer, int buf_len) {
+    printf("TCPServerReceived:%s", buffer);
+    if (!strncmp(buffer, "DWLD ", 5)) {
+        printf("Download\n");
+    }
+    else if (!strncmp(buffer, "UPLD ", 5)) {
+	dwld(buffer, buf_len);
+    }
+    else if (!strncmp(buffer, "DELF ", 5)) {
+	upld(buffer, buf_len);
+    }
+    else if (!strncmp(buffer, "LIST", 4)) {
+	list();
+    }
+    else if (!strncmp(buffer, "MDIR ", 5)) {
+	mdir(buffer, buf_len);
+    }
+    else if (!strncmp(buffer, "RDIR ", 5)) {
+	rdir(buffer, buf_len);
+    }
+    else if (!strncmp(buffer, "CDIR ", 5)) {
+	cdir(buffer, buf_len);
+    }
+    else if (!strncmp(buffer, "QUIT", 4)) {
+	quit();
+    }
+    return;
+}
+
+void dwld(char *buffer, int buf_len){}
+void upld(char *buffer, int buf_len){}
+void delf(char *buffer, int buf_len){}
+void list(){}
+void mdir(char *buffer, int buf_len){}
+void rdir(char *buffer, int buf_len){}
+void cdir(char *buffer, int buf_len){}
+void quit() {
+	printf("Quit\n");
+        exit(1);
+}
