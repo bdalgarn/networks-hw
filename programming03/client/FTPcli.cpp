@@ -12,13 +12,13 @@
 
 #define PORT 41001 // the port c
 #define HOST "student00.cse.nd.edu"
-#define MAXSIZE 100 // max number of bytes we can get at once
+#define MAX_LINE 256 // max number of bytes we can get at once
 using namespace std;
 
 int main(int argc, char *argv[]){
         struct hostent *hp;
         int sock, numbytes;
-        char buf[MAXSIZE];
+        char buf[MAX_LINE];
         struct sockaddr_in server;
 
         /* translate host name into IP address */
@@ -48,23 +48,40 @@ int main(int argc, char *argv[]){
         }
 
 
-        fgets(buf,sizeof(buf),stdin);
+	while (1) {
+		bzero((char *)&buf, sizeof(buf));
+        	fgets(buf,sizeof(buf),stdin);
 
-        if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
-                fprintf(stderr,"[Sendto] : %s",strerror(errno));
-                return EXIT_FAILURE;
-        }
+        	if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
+                	fprintf(stderr,"[Sendto] : %s",strerror(errno));
+                	return EXIT_FAILURE;
+        	}
+		// Check message to handle response correctly 
+		if (!strncmp(buf, "DWLD", 4)) {
 
-	//      printf("client: connecting to %s\n",(char *)server->ai_addr);
-           // This is where our transfers will take place. We will need:
-           //   -->  query the server
-           //   --> Perform secondary transaction
-           //           --> Download
-           //           --> Upload
-           //           --> Delete
-           //           --> Create Dir
-           //           --> Delete Dir
+		}
+		else if (!strncmp(buf, "UPLD", 4)) {
+			
+		}
+		else if (!strncmp(buf, "DELF", 4)) {
 
+		}
+		else if (!strncmp(buf, "LIST", 4)) {
+		
+		}
+		else if (!strncmp(buf, "MDIR", 4)) {
+
+		}
+		else if (!strncmp(buf, "RDIR", 4)) {
+
+		}
+		else if (!strncmp(buf, "CDIR", 4)) {
+
+		}
+		else if (!strncmp(buf, "QUIT", 4)) {
+
+		}
+	}
         close(sock);
 
     return 0;
