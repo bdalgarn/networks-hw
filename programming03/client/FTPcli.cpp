@@ -91,6 +91,7 @@ int main(int argc, char *argv[]){
 					fwrite((void *)&buf, bytes_to_read, 1, fp);	
 				}
 				fclose(fp);
+				printf("The file download was successful.\n");
 			}
 		}
 		else if (!strncmp(buf, "UPLD", 4)) {
