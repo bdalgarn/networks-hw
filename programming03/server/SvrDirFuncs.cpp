@@ -1,6 +1,31 @@
 #include <stdint.h>
 
 
+void list(){
+   char *cmd = "ls -l";
+   char buf[MAXSIZE];
+   FILE *listing;
+   listing = popen(cmd);
+   int32_t size = sizeof(listing);
+   if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&new_s,sizepf(struct sockaddr)))<0){
+       fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+       continue;
+   }
+   if (listing){
+	while (!feof(listing)){
+              if (fgets(buf,MAXSIZE,listing)!=NULL){
+		    if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&new_s,sizepf(struct sockaddr)))<0){
+       			fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+       			continue;
+   		    }
+	      }
+	}
+   }
+      
+
+}
+
+
 void mdir(char *name, int32_t size){
     char buf[MAXSIZE];
     if ((size!=recv(new_s,buf,sizeof(buf),0))<0){
@@ -44,7 +69,7 @@ void rdir(char *name, int32_t size){
     char *full_path = "";
     sprintf(full_path,"%s%s",root_path,name);
     DIR *d = opendir(full_path);
-    if (d == NULL){ // Success
+    if (d != NULL){ // Success
 	 char *command;
 	 char *temp_com = "rm ";
          sprintf(command,"%s%s",temp_com,full_path);
@@ -76,7 +101,7 @@ void cdir(char *name, int32_t size){
     char *full_path = "";
     sprintf(full_path,"%s%s",root_path,name);
     DIR *d = opendir(full_path);
-    if (d == NULL){ // Success
+    if (d != NULL){ // Success
 	 char *command;
 	 char *temp_com = "cd ";
          sprintf(command,"%s%s",temp_com,full_path);
