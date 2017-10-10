@@ -10,7 +10,7 @@
 
 #include <arpa/inet.h>
 
-#define PORT 41001 // the port c
+#define PORT 41002 // the port c
 #define HOST "student00.cse.nd.edu"
 #define MAX_LINE 256 // max number of bytes we can get at once
 using namespace std;
@@ -58,7 +58,17 @@ int main(int argc, char *argv[]){
         	}
 		// Check message to handle response correctly 
 		if (!strncmp(buf, "DWLD", 4)) {
-
+			// Get response from server
+			bzero((char *)&buf, sizeof(buf));
+			recv(sock, buf, sizeof(buf), 0); 
+			int file_size;
+			sscanf(buf, "%d", &file_size); 
+			if (file_size < 0) {
+				printf("That file does not exist\n");
+			}
+			else {
+				printf("File size: %d\n", file_size);
+			}
 		}
 		else if (!strncmp(buf, "UPLD", 4)) {
 			

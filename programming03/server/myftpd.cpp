@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -72,8 +73,31 @@ int main(int argc, char * argv[]){
       	perror("ServerReceivedError!");
       	exit(1);}
     	if(len==0)break;
-	printf("TCPServerReceived:%s", buf);
     	if (!strncmp(buf, "DWLD", 4)) {
+		char operation[5];
+		short int filename_len;
+		char filename[64];
+		// Decodes information sent by client
+		sscanf(buf, "%s %hi %s", operation, &filename_len, filename);
+		printf("%s %hi %s\n", operation, filename_len, filename);
+
+		// Checks for size of file
+		FILE *fp = fopen(filename, "r");
+		int size;
+		if (fp == NULL) {
+			size = -1;	
+			printf("File not in local directory\n");
+		}
+		else {
+			fseek(fp, 0L, SEEK_END);
+			size = ftell(fp);
+			printf("Size of file: %d\n", size);
+		}
+
+		// Responds to client
+		bzero((char *)&buf, sizeof(buf));
+		sprintf(buf, "%d", size);
+		send(new_s, buf, sizeof(buf), 0); 
     	}
     	else if (!strncmp(buf, "UPLD ", 4)) {
     	}
