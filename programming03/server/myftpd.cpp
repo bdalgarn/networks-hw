@@ -102,7 +102,9 @@ int main(int argc, char * argv[]){
     	else if (!strncmp(buf, "UPLD ", 4)) {
     	}
     	else if (!strncmp(buf, "DELF", 4)) {
-    	}
+	  sscanf(buf, "%s %hi %s", operation, &filename_len, filename);
+	  delf(s, filename, filename_len);
+	}
     	else if (!strncmp(buf, "LIST", 4)) {
     	}
     	else if (!strncmp(buf, "MDIR", 4)) {
@@ -121,7 +123,6 @@ int main(int argc, char * argv[]){
 
 void dwld(char *buffer, int buf_len){}
 void upld(char *buffer, int buf_len){}
-void delf(char *buffer, int buf_len){}
 void list(){}
 void mdir(char *buffer, int buf_len){
 /*    char buf[MAXSIZE];
@@ -219,4 +220,51 @@ void cdir(char *buffer, int buf_len){
 void quit() {
 	printf("Quit\n");
         exit(1);
+}
+void delf(int server_addr, char *name, int32_t size){
+  char buf[MAXSIZE];
+  if ((size=recv(server_addr,buf,sizeof(buf),0))<0){
+    fprintf(stderr,"[recv] : %s",strerror(errno));
+    return -1;
+  }
+    char *root_path = "../"
+      char *full_path = "";
+    sprintf(full_path,"%s%s",root_path,name);
+    FILE *fd = fopen(full_path,"r");
+    if (fd){ // Success                                                                                               
+      char *command,return_str;
+      char *temp_com = "rm ";
+      sprintf(command,"%s%s",temp_com,full_path);
+      strcpy(buf,"1");
+      if ((sendto(server_addr,buf,sizeof(buf),0,(struct sockaddr *)&new_s,sizepf(struct sockaddr)))<0){
+	fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+	return -1;
+      }
+      bzero(buf, MAXSIZE);
+      if ((recv(server_addr,buf,sizeof(buf),0))<0){
+        fprintf(stderr,"[recv] : %s",strerror(errno) < 0);
+        return -1;
+      }
+      if (strcmp(buf, "YES") == 0){\
+        int rtr_val = system(command);
+        bzero(buf, MAXSIZE);
+        if (rtr_val == 0){ // Successful Sys Call                                                                    
+          sprintf(return_str,"%s was succesfully deleted\n",name);
+          strcpy(buf,return_str);
+        }else{             // Failed Sys Call                                                                        
+          sprintf(return_str,"%s was not deleted\n",name);
+          strcpy(buf,return_str);
+        }
+      }else{
+        return;
+      }
+
+    }else{            // Failed Sys Call                                                                              
+      strcpy(buf,"-1");
+    }
+    /* Sends Message */
+    if ((sendto(server_addr,buf,sizeof(buf),0,(struct sockaddr *)&new_s,sizepf(struct sockaddr)))<0){
+      fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+      continue;
+    }
 }

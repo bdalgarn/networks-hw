@@ -204,3 +204,51 @@ void cdir(char *name, int32_t size){
 
 }
 
+void delf(char *name, int32_t size){
+  char *size = atoi(size);
+
+  char *init_msg = "";
+  sprintf(init_msg,"%s %s",size,name);
+
+  if (connect(sock, (struct sockaddr*)&server,sizeof(server)) == -1) {
+    perror("client: connect");
+    return EXIT_FAILURE;
+  }
+
+  bzero((char *)&buf, sizeof(buf));
+  strcpy(buf,init_msg,sizeof(init_msg));
+  if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
+    fprintf(stderr,"[Sendto] : %s",strerror(errno));
+    return EXIT_FAILURE;
+  }
+  if ((size=recv(sock,buf,sizeof(buf),0))<0){
+    fprintf(stderr,"[recv] : %s",strerror(errno));
+    return -1;
+  }
+  int num;
+  if (!strncmp(buf,"-1",2)){
+    fprintf(stdout,"The file does not exist on the server\n");
+    continue;
+  }else {
+    fprintf(stdout,"Are you sure you want to delete (YES/NO)?%s\n", name);
+    bzero(buf, sizeof(buf));
+    fgets(buf,sizeof(buf),stdin);
+    if (!strncmp(buf, "NO", 2)){
+      fprintf(stdout,"Delete abandoned by user!\n", name);
+      continue;
+    }
+    if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
+      fprintf(stderr,"[Sendto] : %s",strerror(errno));
+      return EXIT_FAILURE;
+    }
+    bzero(buf, sizeof(buf));
+    if ((size=recv(sock,buf,sizeof(buf),0))<0){
+    fprintf(stderr,"[recv] : %s",strerror(errno));
+    return -1;
+  }
+
+
+    
+    continue;
+  }
+}
