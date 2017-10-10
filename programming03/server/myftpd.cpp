@@ -15,7 +15,7 @@
 
 using namespace std;
 
-#define MAX_LINE 256
+#define MAX_LINE 2048
 
 int main(int argc, char * argv[]){
 
@@ -92,12 +92,35 @@ int main(int argc, char * argv[]){
 			fseek(fp, 0L, SEEK_END);
 			size = ftell(fp);
 			printf("Size of file: %d\n", size);
+			rewind(fp);
 		}
 
 		// Responds to client
 		bzero((char *)&buf, sizeof(buf));
 		sprintf(buf, "%d", size);
 		send(new_s, buf, sizeof(buf), 0); 
+
+		// Sends file to client
+		if (size >= 0) {
+			int bytes_remaining = size;
+			size_t bytes_sent = 0;
+			while (bytes_remaining > 0) {
+				int bytes_to_send;
+				if (bytes_remaining < MAX_LINE) {
+					bytes_to_send = bytes_remaining;
+				}
+				else {
+					bytes_to_send = MAX_LINE;
+				}
+				bytes_remaining -= bytes_to_send;
+
+				bzero((char *)&buf, sizeof(buf));
+				fread((void *)&buf, bytes_to_send, 1, fp);
+				bytes_sent += send(new_s, buf, bytes_to_send, 0);
+				printf("bytes_to_send: %d, bytes_remaining %d\n", bytes_to_send, bytes_remaining);
+			}
+		}
+		fclose(fp);
     	}
     	else if (!strncmp(buf, "UPLD ", 4)) {
     	}

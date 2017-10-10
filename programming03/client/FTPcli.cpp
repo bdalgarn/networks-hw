@@ -12,7 +12,7 @@
 
 #define PORT 41002 // the port c
 #define HOST "student00.cse.nd.edu"
-#define MAX_LINE 256 // max number of bytes we can get at once
+#define MAX_LINE 2048 // max number of bytes we can get at once
 using namespace std;
 
 int main(int argc, char *argv[]){
@@ -58,6 +58,11 @@ int main(int argc, char *argv[]){
         	}
 		// Check message to handle response correctly 
 		if (!strncmp(buf, "DWLD", 4)) {
+			char operation[5];
+			short size;
+			char filename[64];
+			// Store info sent to server
+			sscanf(buf, "%s %hi %s", operation, &size, filename);
 			// Get response from server
 			bzero((char *)&buf, sizeof(buf));
 			recv(sock, buf, sizeof(buf), 0); 
@@ -67,7 +72,25 @@ int main(int argc, char *argv[]){
 				printf("That file does not exist\n");
 			}
 			else {
+				FILE *fp = fopen(filename, "w");
 				printf("File size: %d\n", file_size);
+				int bytes_remaining = file_size;
+				size_t bytes_read = 0;
+				bzero((char *)&buf, sizeof(buf));
+				while (bytes_remaining > 0) {
+					int bytes_to_read;
+					if (bytes_remaining < MAX_LINE) {
+						bytes_to_read = bytes_remaining;
+					}
+					else {
+						bytes_to_read = MAX_LINE;
+					}
+					bytes_remaining -= bytes_to_read;
+					printf("bytes to read: %d, bytes remaining: %d\n", bytes_to_read, bytes_remaining);
+					bytes_read += recv(sock, buf, bytes_to_read, 0);   
+					fwrite((void *)&buf, bytes_to_read, 1, fp);	
+				}
+				fclose(fp);
 			}
 		}
 		else if (!strncmp(buf, "UPLD", 4)) {
@@ -97,110 +120,4 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
-void mdir(char *name, int32_t size){
-//    char buf[MAXSIZE]; 
-//    if ((size!=recv(new_s,buf,sizeof(buf),0))<0){
-//	fprintf(stderr,"[recv] : %s",strerror(errno));
-//	return -1;
-//    }
-//
-    char *size = atoi(size);
-   
-    char *init_msg = "";
-    sprintf(init_msg,"%s %s",size,name);
-
-    if (connect(sock, (struct sockaddr*)&server,sizeof(server)) == -1) {
-         perror("client: connect");
-         return EXIT_FAILURE;
-    }
-
-    bzero((char *)&buf, sizeof(buf));
-    strcpy(buf,init_msg,sizeof(init_msg));
-    if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
-            fprintf(stderr,"[Sendto] : %s",strerror(errno));
-            return EXIT_FAILURE;
-    }
-    if ((size=recv(sock,buf,sizeof(buf),0))<0){
-	fprintf(stderr,"[recv] : %s",strerror(errno));
-	return -1;
-    }
-    int num;
-    if (!strncmp(buf,"-2",2)){
-       fprintf(stdout,"The directory already exists on the server\n");
-       continue;
-    }else if (!strncmp(buf,"-1",2)){
-	fprintf(stdout,"Error making the directory\n");
-	continue;
-    }else{
-	fprintf(stdout,"The directory was successfully made\n");
-	continue;
-    }
-}
-
-void rdir(char *name, int32_t size){
-    char *size = atoi(size);
-   
-    char *init_msg = "";
-    sprintf(init_msg,"%s %s",size,name);
-
-    if (connect(sock, (struct sockaddr*)&server,sizeof(server)) == -1) {
-         perror("client: connect");
-         return EXIT_FAILURE;
-    }
-
-    bzero((char *)&buf, sizeof(buf));
-    strcpy(buf,init_msg,sizeof(init_msg));
-    if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
-            fprintf(stderr,"[Sendto] : %s",strerror(errno));
-            return EXIT_FAILURE;
-    }
-    if ((size=recv(sock,buf,sizeof(buf),0))<0){
-	fprintf(stderr,"[recv] : %s",strerror(errno));
-	return -1;
-    }
-    int num;
-    if (!strncmp(buf,"-2",2) || !strncmp(buf,"-1",2)){
-       fprintf(stdout,"Failed to delete directory\n");
-       continue;
-    }else{
-	fprintf(stdout,"The directory was successfully deleted\n");
-	continue;
-    }
-}
-
-void cdir(char *name, int32_t size){
-
-    char *size = atoi(size);
-   
-    char *init_msg = "";
-    sprintf(init_msg,"%s %s",size,name);
-
-    if (connect(sock, (struct sockaddr*)&server,sizeof(server)) == -1) {
-         perror("client: connect");
-         return EXIT_FAILURE;
-    }
-
-    bzero((char *)&buf, sizeof(buf));
-    strcpy(buf,init_msg,sizeof(init_msg));
-    if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
-            fprintf(stderr,"[Sendto] : %s",strerror(errno));
-            return EXIT_FAILURE;
-    }
-    if ((size!=recv(sock,buf,sizeof(buf),0))<0){
-	fprintf(stderr,"[recv] : %s",strerror(errno));
-	return -1;
-    }
-
-    if (!strncmp(buf,"-2",2)){
-       fprintf(stdout,"The directory does exist on the server\n");
-       continue;
-    }else if (!strncmp(buf,"-1",2)){
-	fprintf(stdout,"Error changing into the directory\n");
-	continue;
-    }else{
-	fprintf(stdout,"Successfully changed directory\n");
-	continue;
-    }
-
-}
 
