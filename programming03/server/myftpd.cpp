@@ -15,12 +15,12 @@
 
 using namespace std;
 
+
 #define MAX_LINE 2048
 
 int main(int argc, char * argv[]){
 
   if (argc != 2){
-    cout << "here" << endl;
     exit(1);
     
   }
@@ -29,7 +29,6 @@ int main(int argc, char * argv[]){
   char buf[MAX_LINE];
 
   int port_number = atoi(argv[1]);
-  cout << port_number << endl;
   int len;
   int s, new_s;
   int opt = 1;
@@ -125,9 +124,63 @@ int main(int argc, char * argv[]){
     	else if (!strncmp(buf, "UPLD ", 4)) {
     	}
     	else if (!strncmp(buf, "DELF", 4)) {
+	  char operation[5];
+	  short int filename_len;
+	  char filename[64];
+	  int sizeRec;
 	  sscanf(buf, "%s %hi %s", operation, &filename_len, filename);
-	  delf(s, filename, filename_len);
-	}
+	  //	  delf(s, sin, filename, filename_len);
+	  char buf[MAX_LINE];
+	  if ((sizeRec=recv(s,buf,sizeof(buf),0))<0){
+	    fprintf(stderr,"[recv] : %s",strerror(errno));
+	    exit(1);
+	  }
+	  char *root_path = "../";
+	  char *full_path = "";
+	  sprintf(full_path,"%s%s",root_path,filename);
+	  FILE *fd = fopen(full_path,"r");
+	  if (fd){ // Success                                                         \
+                                                                                 
+	    char *command;
+	    char return_str[MAX_LINE];
+	    char *temp_com = "rm ";
+	    sprintf(command,"%s%s",temp_com,full_path);
+	    strcpy(buf,"1");
+	    if ((sendto(s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
+	      fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+	      exit(1);
+	    }
+	    bzero(buf, MAX_LINE);
+	    if ((recv(s,buf,sizeof(buf),0))<0){
+	      fprintf(stderr,"[recv] : %s",strerror(errno));
+	      exit(1);
+	    }
+	    if (strcmp(buf, "YES") == 0){\
+	      int rtr_val = system(command);
+	      bzero(buf, MAX_LINE);
+	      if (rtr_val == 0){ // Successful Sys Call 
+		sprintf(return_str,"%s was succesfully deleted\n",filename);
+		strcpy(buf,return_str);
+	      }else{             // Failed Sys Call
+		sprintf(return_str,"%s was not deleted\n",filename);
+		strcpy(buf,return_str);
+	      }
+	    }else{
+	      continue;
+	    }
+
+	  }else{            // Failed Sys Call                                                                                                                  
+	    strcpy(buf,"-1");
+	  }
+	  /* Sends Message */
+	  if ((sendto(s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
+	    fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+	    exit(1);
+	  }
+
+
+
+}
     	else if (!strncmp(buf, "LIST", 4)) {
     	}
     	else if (!strncmp(buf, "MDIR", 4)) {
@@ -244,33 +297,34 @@ void quit() {
 	printf("Quit\n");
         exit(1);
 }
-void delf(int server_addr, char *name, int32_t size){
-  char buf[MAXSIZE];
-  if ((size=recv(server_addr,buf,sizeof(buf),0))<0){
+void delf(int server_fd,  struct sockaddr_in server, char *name, int32_t size){
+  char buf[MAX_LINE];
+  if ((size=recv(server_fd,buf,sizeof(buf),0))<0){
     fprintf(stderr,"[recv] : %s",strerror(errno));
-    return -1;
+    exit(1);
   }
-    char *root_path = "../"
+  char *root_path = "../";
       char *full_path = "";
     sprintf(full_path,"%s%s",root_path,name);
     FILE *fd = fopen(full_path,"r");
     if (fd){ // Success                                                                                               
-      char *command,return_str;
+      char *command; 
+	char return_str[MAX_LINE];
       char *temp_com = "rm ";
       sprintf(command,"%s%s",temp_com,full_path);
       strcpy(buf,"1");
-      if ((sendto(server_addr,buf,sizeof(buf),0,(struct sockaddr *)&new_s,sizepf(struct sockaddr)))<0){
+      if ((sendto(server_fd,buf,sizeof(buf),0,(struct sockaddr *)&server,sizeof(struct sockaddr)))<0){
 	fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
-	return -1;
+	exit(1);
       }
-      bzero(buf, MAXSIZE);
-      if ((recv(server_addr,buf,sizeof(buf),0))<0){
-        fprintf(stderr,"[recv] : %s",strerror(errno) < 0);
-        return -1;
+      bzero(buf, MAX_LINE);
+      if ((recv(server_fd,buf,sizeof(buf),0))<0){
+        fprintf(stderr,"[recv] : %s",strerror(errno));
+        exit(1);
       }
       if (strcmp(buf, "YES") == 0){\
         int rtr_val = system(command);
-        bzero(buf, MAXSIZE);
+        bzero(buf, MAX_LINE);
         if (rtr_val == 0){ // Successful Sys Call                                                                    
           sprintf(return_str,"%s was succesfully deleted\n",name);
           strcpy(buf,return_str);
@@ -286,8 +340,8 @@ void delf(int server_addr, char *name, int32_t size){
       strcpy(buf,"-1");
     }
     /* Sends Message */
-    if ((sendto(server_addr,buf,sizeof(buf),0,(struct sockaddr *)&new_s,sizepf(struct sockaddr)))<0){
+    if ((sendto(server_fd,buf,sizeof(buf),0,(struct sockaddr *)&server,sizeof(struct sockaddr)))<0){
       fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
-      continue;
+      exit(1);
     }
 }

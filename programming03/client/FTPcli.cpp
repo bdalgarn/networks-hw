@@ -9,9 +9,6 @@
 #include <sys/socket.h>
 
 #include <arpa/inet.h>
-
-#define PORT 41002 // the port c
-#define HOST "student00.cse.nd.edu"
 #define MAX_LINE 2048 // max number of bytes we can get at once
 using namespace std;
 
@@ -20,6 +17,17 @@ int main(int argc, char *argv[]){
         int sock, numbytes;
         char buf[MAX_LINE];
         struct sockaddr_in server;
+
+
+	if (argc != 3){
+	  exit(1);
+	}
+
+	char * HOST = argv[1];
+	int PORT = atoi(argv[2]);
+
+	fprintf(stdout, "Port: %d and Host: %s", PORT, HOST );
+
 
         /* translate host name into IP address */
         hp = gethostbyname(HOST);
@@ -98,6 +106,56 @@ int main(int argc, char *argv[]){
 			
 		}
 		else if (!strncmp(buf, "DELF", 4)) {
+		  char operation[5];
+		  short int filename_len;
+		  char filename[64];
+		  // Store info sent to server                                                                  
+		  sscanf(buf, "%s %hi %s", operation, &filename_len, filename);
+		  // delf(sock, server, filename, filename_len);
+		  int bytesRec;
+
+		  char buf[MAX_LINE];
+
+		  unlink(argv[2]);
+		  
+		  if (connect(sock, (struct sockaddr*)&server,sizeof(server)) == -1) {
+		    perror("client: connect");
+		    connect;
+		  }
+
+		  bzero((char *)&buf, sizeof(buf));
+		  if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
+		    fprintf(stderr,"[Sendto] : %s",strerror(errno));
+		    continue;
+		  }
+		  if ((bytesRec=recv(sock,buf,sizeof(buf),0))<0){
+		    fprintf(stderr,"[recv] : %s",strerror(errno));
+		    continue;
+		  }
+		  int num;
+		  if (!strncmp(buf,"-1",2)){
+		    fprintf(stdout,"The file does not exist on the server\n");
+		    continue;
+		  }else {
+		    fprintf(stdout,"Are you sure you want to delete (YES/NO)?%s\n", filename);
+		    bzero(buf, sizeof(buf));
+		    fgets(buf,sizeof(buf),stdin);
+		    if (!strncmp(buf, "NO", 2)){
+		      fprintf(stdout,"Delete abandoned by user!\n");
+		      continue;
+		    }
+		    if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
+		      fprintf(stderr,"[Sendto] : %s",strerror(errno));
+		      continue;
+		    }
+		    bzero(buf, sizeof(buf));
+		    if ((bytesRec=recv(sock,buf,sizeof(buf),0))<0){
+		      fprintf(stderr,"[recv] : %s",strerror(errno));
+		      continue;
+		    }
+		  }
+
+
 
 		}
 		else if (!strncmp(buf, "LIST", 4)) {
@@ -122,51 +180,46 @@ int main(int argc, char *argv[]){
 }
 
 
-void delf(char *name, int32_t size){
-  char *size = atoi(size);
+void delf(int sock,  struct sockaddr_in server, char *name, int32_t file_size){
+  int bytesRec;
 
-  char *init_msg = "";
-  sprintf(init_msg,"%s %s",size,name);
+  char buf[MAX_LINE];
+
 
   if (connect(sock, (struct sockaddr*)&server,sizeof(server)) == -1) {
     perror("client: connect");
-    return EXIT_FAILURE;
+    return;
   }
 
   bzero((char *)&buf, sizeof(buf));
-  strcpy(buf,init_msg,sizeof(init_msg));
   if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
     fprintf(stderr,"[Sendto] : %s",strerror(errno));
-    return EXIT_FAILURE;
+    return;
   }
-  if ((size=recv(sock,buf,sizeof(buf),0))<0){
+  if ((bytesRec=recv(sock,buf,sizeof(buf),0))<0){
     fprintf(stderr,"[recv] : %s",strerror(errno));
-    return -1;
+    return;
   }
   int num;
   if (!strncmp(buf,"-1",2)){
     fprintf(stdout,"The file does not exist on the server\n");
-    continue;
+    return;
   }else {
     fprintf(stdout,"Are you sure you want to delete (YES/NO)?%s\n", name);
     bzero(buf, sizeof(buf));
     fgets(buf,sizeof(buf),stdin);
     if (!strncmp(buf, "NO", 2)){
-      fprintf(stdout,"Delete abandoned by user!\n", name);
-      continue;
+      fprintf(stdout,"Delete abandoned by user!\n");
+      return;
     }
     if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
       fprintf(stderr,"[Sendto] : %s",strerror(errno));
-      return EXIT_FAILURE;
+      return;
     }
     bzero(buf, sizeof(buf));
-    if ((size=recv(sock,buf,sizeof(buf),0))<0){
-    fprintf(stderr,"[recv] : %s",strerror(errno));
-    return -1;
-  }
-
-
-    
-    continue;
+    if ((bytesRec=recv(sock,buf,sizeof(buf),0))<0){
+      fprintf(stderr,"[recv] : %s",strerror(errno));
+      return;
+    } 
   }
 }
