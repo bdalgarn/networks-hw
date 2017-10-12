@@ -17,6 +17,7 @@ using namespace std;
 void delf(int,  struct sockaddr_in, char *, int32_t);
 void list_func(int, struct sockaddr_in);
 void mdir(int, struct sockaddr_in);
+void rdir(int sock,  struct sockaddr_in server, char *filename, int32_t filename_len);
 
 int main(int argc, char *argv[]){
         struct hostent *hp;
@@ -71,7 +72,6 @@ int main(int argc, char *argv[]){
 			char filename[64];
 			// Store info sent to server
 			sscanf(buf, "%s %hi %s", operation, &size, filename);
-			printf("%s %hi %s\n", operation, size, filename);
 			// Get response from server
 			size = strlen(filename);
 			bzero((char *)&buf, sizeof(buf));
