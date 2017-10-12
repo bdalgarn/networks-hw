@@ -194,13 +194,32 @@ int main(int argc, char *argv[]){
 		  list_func(sock, server);
 		}
 		else if (!strncmp(buf, "MDIR", 4)) {
-		  mdir(sock,server);
+		  char operation[5];
+		  short filename_len;
+		  char filename[64];
+		  // Store info sent to server                                                                  
+		  sscanf(buf, "%s %s", operation, filename);
+		  filename_len = strlen(filename);
+		  mdir(sock, server, filename, filename_len);
 		}
 		else if (!strncmp(buf, "RDIR", 4)) {
-
+		  char operation[5];
+		  short filename_len;
+		  char filename[64];
+		  // Store info sent to server                                                                  
+		  sscanf(buf, "%s %s", operation, filename);
+		  filename_len = strlen(filename);
+		  rdir(sock, server, filename, filename_len);	
 		}
 		else if (!strncmp(buf, "CDIR", 4)) {
-
+		  char operation[5];
+		  short filename_len;
+		  char filename[64];
+		  // Store info sent to server                                                                  
+		  sscanf(buf, "%s %s", operation, filename);
+		  filename_len = strlen(filename);
+		  cdir(sock, server, filename, filename_len);
+	
 		}
 		else if (!strncmp(buf, "QUIT", 4)) {
 		  break;
@@ -209,38 +228,6 @@ int main(int argc, char *argv[]){
         close(sock);
 
     return 0;
-}
-
-void mdir(int sock, struct sockaddr_in server ){
-  char buf[MAX_LINE];
-  bzero((char *)&buf,sizeof(buf));
-  fgets(buf,sizeof(buf),stdin);
-  short name_len;
-  char first[MAX_LINE] = "";
-  sprintf(first,"%hi %s",&name_len,buf);
-  if ((sendto(sock,first,sizeof(first),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) \
-      < 0){
-    fprintf(stderr,"[Sendto] : %s",strerror(errno));
-    exit(1);;
-  }
-
-  printf("%s\n",first);
-  bzero((char *)&buf,sizeof(buf));
-
-
-  int n;
-  if ((n=recv(sock,buf,MAX_LINE,0))<0){
-    fprintf(stderr,"[LIST recv] : %S",strerror(errno));
-  }
-
-  if (!strncmp(buf,"-2",2)){
-    fprintf(stdout,"The directory already exists on the server\n");
-  }else if (!strncmp(buf,"-1",2)){
-    fprintf(stdout,"Error making the directory\n");
-  }else{
-    fprintf(stdout,"The directory was successfully made\n");
-  }
-
 }
 
 
@@ -313,7 +300,105 @@ void delf(int sock,  struct sockaddr_in server, char *filename, int32_t filename
     printf("%s\n", buf);
   }
   else return;
-  
+}
 
+
+void mdir(int sock,  struct sockaddr_in server, char *filename, int32_t filename_len){
+  int bytesRec;
+  char buf[MAX_LINE];
+  bzero((char *)&buf, sizeof(buf));
+  sprintf(buf, "MDIR %hi %s", filename_len, filename);
+  printf("%s\n",buf);
+  if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
+    fprintf(stderr,"[Sendto] : %s",strerror(errno));
+    exit(1);
+  }
+  bzero(buf, sizeof(buf));
+  if ((bytesRec=recv(sock,buf,sizeof(buf),0))<0){
+    fprintf(stderr,"[recv] : %s",strerror(errno));
+    exit(1);
+  }
+  if (!strncmp(buf,"-2",2)){
+    fprintf(stdout,"The directory already exists\n");
+    return;
+  }else if (!strncmp(buf,"-1", 2)){
+    fprintf(stdout,"Error making the directory\n");
+    return;
+  }else{
+    fprintf(stdout,"Directory made\n");
+    return;
+  }
+  return;
+}
+
+void cdir(int sock,  struct sockaddr_in server, char *filename, int32_t filename_len){
+  int bytesRec;
+  char buf[MAX_LINE];
+  bzero((char *)&buf, sizeof(buf));
+  sprintf(buf, "CDIR %hi %s", filename_len, filename);
+  printf("%s\n",buf);
+  if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
+    fprintf(stderr,"[Sendto] : %s",strerror(errno));
+    exit(1);
+  }
+  bzero(buf, sizeof(buf));
+  if ((bytesRec=recv(sock,buf,sizeof(buf),0))<0){
+    fprintf(stderr,"[recv] : %s",strerror(errno));
+    exit(1);
+  }
+  if (!strncmp(buf,"-2",2)){
+    fprintf(stdout,"The directory does not exist\n");
+    return;
+  }else if (!strncmp(buf,"-1", 2)){
+    fprintf(stdout,"Error changing the directory\n");
+    return;
+  }else{
+    fprintf(stdout,"Directory changed\n");
+    return;
+  }
 
 }
+
+void rdir(int sock,  struct sockaddr_in server, char *filename, int32_t filename_len){
+  int bytesRec;
+  char buf[MAX_LINE];
+  bzero((char *)&buf, sizeof(buf));
+  sprintf(buf, "RDIR %hi %s", filename_len, filename);
+  printf("%s\n",buf);
+  if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
+    fprintf(stderr,"[Sendto] : %s",strerror(errno));
+    exit(1);
+  }
+  bzero(buf, sizeof(buf));
+  if ((bytesRec=recv(sock,buf,sizeof(buf),0))<0){
+    fprintf(stderr,"[recv] : %s",strerror(errno));
+    exit(1);
+  }
+  int num;
+  if (!strncmp(buf,"-1",2)){
+    fprintf(stdout,"The directory does not exist on the server\n");
+    return;
+  }else if (!strncmp(buf,"1", 1)){
+    fprintf(stdout,"Are you sure you want to delete (YES/NO) %s?\n", filename);
+    bzero(buf, sizeof(buf));
+    fgets(buf,sizeof(buf),stdin);
+    if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
+      fprintf(stderr,"[Sendto] : %s",strerror(errno));
+      exit(1);
+    
+    }
+    if (!strncmp(buf, "NO", 2)){
+      fprintf(stdout,"Delete abandoned by user!\n");
+      return;
+    }
+    bzero(buf, sizeof(buf));
+    if ((bytesRec=recv(sock,buf,sizeof(buf),0))<0){
+      fprintf(stderr,"[recv] : %s",strerror(errno));
+      exit(1);
+    }
+    printf("%s\n", buf);
+  }
+  else return;
+}
+
+
