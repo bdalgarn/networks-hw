@@ -11,7 +11,7 @@
 #include <time.h>
 #include <sys/time.h>  
 #include "server.h"
-
+#include <dirent.h>
 
 using namespace std;
 
@@ -132,8 +132,12 @@ int main(int argc, char * argv[]){
 	  delf(new_s, sin, filename, filename_len);
 	}
     	else if (!strncmp(buf, "LIST", 4)) {
+	  list_func(new_s);
+
     	}
     	else if (!strncmp(buf, "MDIR", 4)) {
+	  mdir(new_s);
+
    	}
     	else if (!strncmp(buf, "RDIR", 4)) {
  	}
@@ -149,36 +153,77 @@ int main(int argc, char * argv[]){
 
 void dwld(char *buffer, int buf_len){}
 void upld(char *buffer, int buf_len){}
-void list(){}
-void mdir(char *buffer, int buf_len){
-/*    char buf[MAXSIZE];
-    if ((size!=recv(new_s,buf,sizeof(buf),0))<0){
-	fprintf(stderr,"[recv] : %s",strerror(errno));
-	return -1;
+void list_func(int new_s){
+  char *cmd = "ls -l";
+  char buf[MAX_LINE];
+  char cat[MAX_LINE];
+  FILE *listing;
+  listing = popen(cmd,"r");
+  int32_t size = sizeof(listing);
+  sprintf(buf,"%d",size);
+ if ((send(new_s,buf,sizeof(buf),0))<0){
+    fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+    exit(1);
+  }
+  if (listing){
+    while (!feof(listing)){
+      if (fgets(buf,MAX_LINE,listing)!=NULL){
+	strcat(cat,buf);
+      }
     }
-    char *root_path = "../root_dir"
-    char *full_path = "";
-    sprintf(full_path,"%s%s",root_path,name);
-    DIR *d = opendir(full_path);
-    if (d == NULL){ // Success
-	 char *command;
-	 char *temp_com = "mkdir ";
-         sprintf(command,"%s%s",temp_com,full_path);
-	 int rtr_val = system(command);
-	 if (rtr_val == 0){ // Successful Sys Call
-	    strcpy(buf,"1");	
-	 }else{             // Failed Sys Call
-	    strcpy(buf,"-1");
-	 }
-    }else{
-	strcpy(buf,"-2"); // Failure
-    } 
-*/    /* Sends Message */
-/*    if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&new_s,sizepf(struct sockaddr)))<0){
-	fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
-	continue;
+    cout <<cat;
+    if ((send(new_s,cat,sizeof(buf),0))<0){
+      fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+      exit(1);
     }
-*/
+
+  }
+
+
+}
+void mdir(int new_s){
+  char buf[MAX_LINE];
+  bzero((char *)&buf,sizeof(buf));
+  int size;
+  if ((size=recv(new_s,buf,sizeof(buf),0))<0){
+    fprintf(stderr,"[recv] : %s",strerror(errno));
+    exit(1);;
+  }
+  cout << buf << endl;
+  char *dir_name;
+  short int *dir_name_length;
+  //          bzero((char *)&buf,sizeof(buf));                                                                       
+  char operation[8];
+   
+  cout << "before scan\n";
+  sscanf(buf,"%s %hi %s",operation, &dir_name_length,dir_name);
+  char full_path[MAX_LINE] = "";
+  cout << "Before sprint\n";
+  sprintf(full_path,"%s",dir_name);
+  cout << "about to open dir\n";
+  DIR *d = opendir(full_path);
+  cout << "Opened dir\n";
+  if (d == NULL){ // Success                                                                                
+    char *command;
+    char *temp_com = "mkdir ";
+    sprintf(command,"%s%s",temp_com,full_path);
+    cout << "after sprint\n";
+    int rtr_val = system(command);
+    cout << "After sys call\n";
+    if (rtr_val == 0){ // Successful Sys Call                                                            
+      strcpy(buf,"1");
+    }else{             // Failed Sys Call                                                                
+      strcpy(buf,"-1");
+    }
+  }else{
+    strcpy(buf,"-2"); // Failure                                                                          
+  }
+  closedir(d);
+  /* Sends Message */
+  if ((send(new_s,buf,sizeof(buf),0))<0){
+    fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+  }
+
 }
 void rdir(char *buffer, int buf_len){
 /*    char buf[MAXSIZE];
@@ -249,7 +294,6 @@ void quit() {
 }
 void delf(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
   int sizeRec;
-  //      delf(s, sin, filename, filename_len);                                                               
   char buf[MAX_LINE];
 
   FILE *fd = fopen(name,"r");

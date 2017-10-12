@@ -13,7 +13,8 @@
 using namespace std;
 
 void delf(int,  struct sockaddr_in, char *, int32_t);
-
+void list_func(int, struct sockaddr_in);
+void mdir(int, struct sockaddr_in);
 
 int main(int argc, char *argv[]){
         struct hostent *hp;
@@ -120,10 +121,10 @@ int main(int argc, char *argv[]){
 
 		}
 		else if (!strncmp(buf, "LIST", 4)) {
-		
+		  list_func(sock, server);
 		}
 		else if (!strncmp(buf, "MDIR", 4)) {
-
+		  mdir(sock,server);
 		}
 		else if (!strncmp(buf, "RDIR", 4)) {
 
@@ -138,6 +139,67 @@ int main(int argc, char *argv[]){
         close(sock);
 
     return 0;
+}
+
+void mdir(int sock, struct sockaddr_in server ){
+  char buf[MAX_LINE];
+  bzero((char *)&buf,sizeof(buf));
+  fgets(buf,sizeof(buf),stdin);
+  short name_len;
+  char first[MAX_LINE] = "";
+  sprintf(first,"%hi %s",&name_len,buf);
+  if ((sendto(sock,first,sizeof(first),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) \
+      < 0){
+    fprintf(stderr,"[Sendto] : %s",strerror(errno));
+    exit(1);;
+  }
+
+  printf("%s\n",first);
+  bzero((char *)&buf,sizeof(buf));
+
+
+  int n;
+  if ((n=recv(sock,buf,MAX_LINE,0))<0){
+    fprintf(stderr,"[LIST recv] : %S",strerror(errno));
+  }
+
+  if (!strncmp(buf,"-2",2)){
+    fprintf(stdout,"The directory already exists on the server\n");
+  }else if (!strncmp(buf,"-1",2)){
+    fprintf(stdout,"Error making the directory\n");
+  }else{
+    fprintf(stdout,"The directory was successfully made\n");
+  }
+
+}
+
+
+void list_func(int sock, struct sockaddr_in server){
+  if ((sendto(sock,"LIST",7,0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0\
+      ){
+    fprintf(stderr,"[Sendto] : %s",strerror(errno));
+    exit(1);
+  }
+
+  char buf[MAX_LINE];
+  int n;
+  bzero((char *)&buf,sizeof(buf));
+  if ((n=recv(sock,buf,MAX_LINE,0))<0){
+    fprintf(stderr,"[LIST recv] : %S",strerror(errno));
+  }
+  int32_t size;
+  sscanf(buf,"%hi",&size);
+  if (size <= 0) return;
+  ssize_t counted=0;
+  //                      while (counted!=size){                                                                        
+  //                              cout <<"beginning of loop\n";                                                         
+  bzero((char *)&buf,sizeof(buf));
+  if ((n=recv(sock,buf,MAX_LINE,0))<0){
+    fprintf(stderr,"[LIST recv] : %S",strerror(errno));
+  }
+  printf("%s\n", buf);
+  //                              counted=+n;      
+
 }
 
 
