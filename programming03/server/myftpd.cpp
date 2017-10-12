@@ -180,12 +180,29 @@ int main(int argc, char * argv[]){
 
     	}
     	else if (!strncmp(buf, "MDIR", 4)) {
-	  mdir(new_s);
+	  char operation[5];
+	  short filename_len;
+	  char filename[64];
 
-   	}
+	  sscanf(buf, "%s %hi %s", operation, &filename_len, filename);
+	  mdir(new_s, sin, filename, filename_len);
+	}
     	else if (!strncmp(buf, "RDIR", 4)) {
+	  char operation[5];
+	  short filename_len;
+	  char filename[64];
+
+	  sscanf(buf, "%s %hi %s", operation, &filename_len, filename);
+	  rdir(new_s, sin, filename, filename_len);
  	}
     	else if (!strncmp(buf, "CDIR", 4)) {
+	  char operation[5];
+	  short filename_len;
+	  char filename[64];
+
+	  sscanf(buf, "%s %hi %s", operation, &filename_len, filename);
+	  ddir(new_s, sin, filename, filename_len);
+	
     	}
     	else if (!strncmp(buf, "QUIT", 4)) {
 		// Close sockets
@@ -225,117 +242,139 @@ void list_func(int new_s){
 
 
 }
-void mdir(int new_s){
-  char buf[MAX_LINE];
-  bzero((char *)&buf,sizeof(buf));
-  int size;
-  if ((size=recv(new_s,buf,sizeof(buf),0))<0){
-    fprintf(stderr,"[recv] : %s",strerror(errno));
-    exit(1);;
-  }
-  cout << buf << endl;
-  char *dir_name;
-  short int *dir_name_length;
-  //          bzero((char *)&buf,sizeof(buf));                                                                       
-  char operation[8];
-   
-  cout << "before scan\n";
-  sscanf(buf,"%s %hi %s",operation, &dir_name_length,dir_name);
-  char full_path[MAX_LINE] = "";
-  cout << "Before sprint\n";
-  sprintf(full_path,"%s",dir_name);
-  cout << "about to open dir\n";
-  DIR *d = opendir(full_path);
-  cout << "Opened dir\n";
-  if (d == NULL){ // Success                                                                                
-    char *command;
-    char *temp_com = "mkdir ";
-    sprintf(command,"%s%s",temp_com,full_path);
-    cout << "after sprint\n";
-    int rtr_val = system(command);
-    cout << "After sys call\n";
-    if (rtr_val == 0){ // Successful Sys Call                                                            
-      strcpy(buf,"1");
-    }else{             // Failed Sys Call                                                                
-      strcpy(buf,"-1");
-    }
-  }else{
-    strcpy(buf,"-2"); // Failure                                                                          
-  }
-  closedir(d);
-  /* Sends Message */
-  if ((send(new_s,buf,sizeof(buf),0))<0){
-    fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
-  }
 
-}
-void rdir(char *buffer, int buf_len){
-/*    char buf[MAXSIZE];
-    if ((size!=recv(new_s,buf,sizeof(buf),0))<0){
-	fprintf(stderr,"[recv] : %s",strerror(errno));
-	return -1;
-    }
-    char *root_path = "../root_dir"
-    char *full_path = "";
-    sprintf(full_path,"%s%s",root_path,name);
-    DIR *d = opendir(full_path);
-    if (d != NULL){ // Success
-	 char *command;
-	 char *temp_com = "rm ";
-         sprintf(command,"%s%s",temp_com,full_path);
-	 int rtr_val = system(command);
-	 if (rtr_val == 0){ // Successful Sys Call
-	    strcpy(buf,"1");	
-	 }else{             // Failed Sys Call
-	    strcpy(buf,"-1");
-	 }
-    }else{
-	strcpy(buf,"-2"); // Failure
-    } 
-*/    /* Sends Message */
-/*    if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&new_s,sizepf(struct sockaddr)))<0){
+void mdir(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
+    int sizeRec;
+    char buf[MAX_LINE];
+    DIR *d = opendir(name);
+  if (d==NULL){ // Success                                                                                         
+    char command[64];
+    char return_str[MAX_LINE];
+    char temp_com [64];
+    strcpy (temp_com, "mkdir ");
+    sprintf(command,"%s%s",temp_com,name);
+    strcpy(buf,"1");
+
+      int rtr_val = system(command);
+      bzero(buf, MAX_LINE);
+      if (rtr_val == 0){ // Successful Sys Call                                                               
+	strcpy(buf,"1");
+      }else{             // Failed Sys Call                                                                   
+	strcpy(buf,"-1");
+      }
+      closedir(d);
+      if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
 	fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
-	continue;
+	exit(1);
+      }
     }
-*/
-
+    else return;
+  }
+  else {
+    closedir(d);
+    strcpy(buf,"-2");
+    if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
+      fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+      exit(1);
+    }
+  }
+  /* Sends Message */ 
 }
 
+void rdir(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
+    int sizeRec;
+    char buf[MAX_LINE];
+    DIR *d = opendir(name);
+  if (d){ // Success                                                                                         
+    char command[64];
+    char return_str[MAX_LINE];
+    char temp_com [64];
+    strcpy (temp_com, "rm ");
+    sprintf(command,"%s%s",temp_com,name);
+    strcpy(buf,"1");
 
-void cdir(char *buffer, int buf_len){
-/*    char buf[MAXSIZE];
-    if ((size!=recv(new_s,buf,sizeof(buf),0))<0){
-	fprintf(stderr,"[recv] : %s",strerror(errno));
-	return -1;
+    if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
+      fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+      exit(1);
     }
-    char *root_path = "../root_dir"
-    char *full_path = "";
-    sprintf(full_path,"%s%s",root_path,name);
-    DIR *d = opendir(full_path);
-    if (d != NULL){ // Success
-	 char *command;
-	 char *temp_com = "cd ";
-         sprintf(command,"%s%s",temp_com,full_path);
-	 int rtr_val = system(command);
-	 if (rtr_val == 0){ // Successful Sys Call
-	    buf = "1";	
-	 }else{             // Failed Sys Call
-	    buf = "-1";
-	 }
-    }else{
-	buf = "-2"; // Failure
-    } 
-*/    /* Sends Message */
-/*    if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&new_s,sizepf(struct sockaddr)))<0){
+
+    bzero(buf, MAX_LINE);
+    if ((recv(new_s,buf,sizeof(buf),0))<0){
+      fprintf(stderr,"[recv] : %s",strerror(errno));
+      exit(1);
+    }
+    if (!strcmp(buf, "YES\n")){
+      int rtr_val = system(command);
+      bzero(buf, MAX_LINE);
+      if (rtr_val == 0){ // Successful Sys Call                                                               
+	strcpy(buf,"1");
+      }else{             // Failed Sys Call                                                                   
+	strcpy(buf,"-1");
+      }
+      closedir(d);
+      if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
 	fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
-	continue;
+	exit(1);
+      }
     }
-*/
+    else return;
+  }
+  else {
+    strcpy(buf,"-2");
+    if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
+      fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+      exit(1);
+    }
+    return;
+ }
+  /* Sends Message */ 
+
+
 }
+
+void cdir(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
+    int sizeRec;
+    char buf[MAX_LINE];
+    DIR *d = opendir(name);
+  if (d!=NULL){ // Success                                                                                         
+    char command[64];
+    char return_str[MAX_LINE];
+    char temp_com [64];
+    strcpy (temp_com, "cd ");
+    sprintf(command,"%s%s",temp_com,name);
+    strcpy(buf,"1");
+
+      int rtr_val = system(command);
+      bzero(buf, MAX_LINE);
+      if (rtr_val == 0){ // Successful Sys Call                                                               
+	strcpy(buf,"1");
+      }else{             // Failed Sys Call                                                                   
+	strcpy(buf,"-1");
+      }
+      closedir(d);
+      if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
+	fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+	exit(1);
+      }
+    }
+    else return;
+  }
+  else {
+    closedir(d);
+    strcpy(buf,"-2");
+    if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
+      fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+      exit(1);
+    }
+  }
+  /* Sends Message */ 
+}
+
 void quit() {
 	printf("Quit\n");
         exit(1);
 }
+
 void delf(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
   int sizeRec;
   char buf[MAX_LINE];
@@ -377,9 +416,6 @@ void delf(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
       }
     }
     else return;
-
-
-
   }
   else {
     strcpy(buf,"-1");
