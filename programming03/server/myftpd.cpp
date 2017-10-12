@@ -69,14 +69,12 @@ int main(int argc, char * argv[]){
     int cont = 1;
     while (cont) {
     	len=recv(new_s,buf,sizeof(buf),0);
-    	if(len==0)break;
     	if (!strncmp(buf, "DWLD", 4)) {
 		char operation[5];
 		short filename_len;
 		char filename[64];
 		// Decodes information sent by client
 		sscanf(buf, "%s %hi %s", operation, &filename_len, filename);
-		printf("%s %hi %s\n", operation, filename_len, filename);
 
 		// Checks for size of file
 		FILE *fp = fopen(filename, "r");
@@ -88,7 +86,6 @@ int main(int argc, char * argv[]){
 		else {
 			fseek(fp, 0L, SEEK_END);
 			size = ftell(fp);
-			printf("Size of file: %d\n", size);
 			rewind(fp);
 		}
 
@@ -114,7 +111,6 @@ int main(int argc, char * argv[]){
 				bzero((char *)&buf, sizeof(buf));
 				fread((void *)&buf, bytes_to_send, 1, fp);
 				bytes_sent += send(new_s, buf, bytes_to_send, 0);
-				printf("bytes_to_send: %d, bytes_remaining %d\n", bytes_to_send, bytes_remaining);
 			}
 			fclose(fp);
 		}
@@ -125,7 +121,6 @@ int main(int argc, char * argv[]){
 		char filename[64];
 		// Decodes information sent by client
 		sscanf(buf, "%s %hi %s", operation, &filename_len, filename);
-		printf("%s %hi %s\n", operation, filename_len, filename);
 
 		// Sends acknowdlegement to client (Sends a 32-bit int == 1)
 		bzero((char *)&buf, sizeof(buf));
