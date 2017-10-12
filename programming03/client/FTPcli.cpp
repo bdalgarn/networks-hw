@@ -68,7 +68,8 @@ int main(int argc, char *argv[]){
 			short size;
 			char filename[64];
 			// Store info sent to server
-			sscanf(buf, "%s %s", operation, filename);
+			sscanf(buf, "%s %hi %s", operation, &size, filename);
+			printf("%s %hi %s\n", operation, size, filename);
 			// Get response from server
 			size = strlen(filename);
 			bzero((char *)&buf, sizeof(buf));
