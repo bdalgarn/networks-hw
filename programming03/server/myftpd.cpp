@@ -64,7 +64,7 @@ int main(int argc, char * argv[]){
     if((new_s=accept(s,(struct sockaddr*)&sin, (socklen_t *)&len))<0){
       perror("simplex-talk:accept");
       exit(1);
-    }
+      }
     // Receives from client until "QUIT" is called 
     int cont = 1;
     while (cont) {
@@ -271,7 +271,6 @@ void delf(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
       fprintf(stderr,"[recv] : %s",strerror(errno));
       exit(1);
     }
-    printf("this is buf: %s", buf);
     if (!strcmp(buf, "YES\n")){
       int rtr_val = system(command);
       bzero(buf, MAX_LINE);
@@ -296,7 +295,6 @@ void delf(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
   }
   else {
     strcpy(buf,"-1");
-    fclose(fd);
     if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
       fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
       exit(1);

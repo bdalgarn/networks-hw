@@ -132,7 +132,7 @@ int main(int argc, char *argv[]){
 
 		}
 		else if (!strncmp(buf, "QUIT", 4)) {
-
+		  break;
 		}
 	}
         close(sock);
@@ -160,7 +160,7 @@ void delf(int sock,  struct sockaddr_in server, char *filename, int32_t filename
   if (!strncmp(buf,"-1",2)){
     fprintf(stdout,"The file does not exist on the server\n");
     return;
-  }else {
+  }else if (!strncmp(buf,"1", 1)){
     fprintf(stdout,"Are you sure you want to delete (YES/NO) %s?\n", filename);
     bzero(buf, sizeof(buf));
     fgets(buf,sizeof(buf),stdin);
@@ -178,7 +178,10 @@ void delf(int sock,  struct sockaddr_in server, char *filename, int32_t filename
       fprintf(stderr,"[recv] : %s",strerror(errno));
       exit(1);
     }
-    printf("%s", buf);
-  
+    printf("%s\n", buf);
   }
+  else return;
+  
+
+
 }
