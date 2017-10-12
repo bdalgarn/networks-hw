@@ -118,10 +118,46 @@ int main(int argc, char * argv[]){
 				bytes_sent += send(new_s, buf, bytes_to_send, 0);
 				printf("bytes_to_send: %d, bytes_remaining %d\n", bytes_to_send, bytes_remaining);
 			}
+			fclose(fp);
 		}
-		fclose(fp);
     	}
     	else if (!strncmp(buf, "UPLD ", 4)) {
+		char operation[5];
+		short filename_len;
+		char filename[64];
+		// Decodes information sent by client
+		sscanf(buf, "%s %hi %s", operation, &filename_len, filename);
+		printf("%s %hi %s\n", operation, filename_len, filename);
+
+		// Sends acknowdlegement to client (Sends a 32-bit int == 1)
+		bzero((char *)&buf, sizeof(buf));
+		sprintf(buf, "%d", 1);
+		send(new_s, buf, sizeof(buf), 0);	
+
+		// Receives size of file from client
+		bzero((char *)&buf, sizeof(buf));
+		recv(new_s, buf, sizeof(buf), 0);
+		int file_size;
+		sscanf(buf, "%d", &file_size);
+		
+		// Receive file from client
+		FILE *fp = fopen(filename, "w");
+		int bytes_remaining = file_size;
+		size_t bytes_read = 0;
+		bzero((char *)&buf, sizeof(buf));
+		while (bytes_remaining > 0) {
+			int bytes_to_read;
+			if (bytes_remaining < MAX_LINE) {
+				bytes_to_read = bytes_remaining;
+			}
+			else {
+				bytes_to_read = MAX_LINE;
+			}
+			bytes_remaining -= bytes_to_read;
+			recv(new_s, buf, bytes_to_read, 0);
+			fwrite((void *)&buf, bytes_to_read, 1, fp);
+		}
+		fclose(fp);
     	}
     	else if (!strncmp(buf, "DELF", 4)) {
 	  char operation[5];

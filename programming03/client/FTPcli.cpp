@@ -109,7 +109,64 @@ int main(int argc, char *argv[]){
 			}
 		}
 		else if (!strncmp(buf, "UPLD", 4)) {
-			
+			char operation[5];
+			short size;
+			char filename[64];
+			// Store info sent to server
+			sscanf(buf, "%s %hi %s", operation, &size, filename);
+			printf("%s %hi %s\n", operation, size, filename);
+			// Get response from server
+			size = strlen(filename);
+			bzero((char *)&buf, sizeof(buf));
+			sprintf(buf, "%s %hi %s", operation, size, filename);
+			if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
+			  fprintf(stderr,"[Sendto] : %s",strerror(errno));
+			  return EXIT_FAILURE;
+			}
+			bzero(buf, sizeof(buf));
+			recv(sock, buf, sizeof(buf), 0); 
+			int readyToUpload;
+			sscanf(buf, "%d", &readyToUpload); 
+			if (readyToUpload != 1) {
+				printf("Error uploading\n");
+			}
+			else { 
+				// Get file size
+				FILE *fp = fopen(filename, "r");
+				int filesize;
+				if (fp == NULL) {
+					filesize = -1;
+					printf("File not in local directory\n");
+				}
+				else {
+					fseek(fp, 0L, SEEK_END);
+					filesize = ftell(fp);
+					printf("Size of file: %d\n", filesize);
+					rewind(fp);
+				}
+				bzero((char *)&buf, sizeof(buf));
+				sprintf(buf, "%d", filesize);
+				send(sock, buf, sizeof(buf), 0);
+
+				// Send file to server
+				
+				int bytes_remaining = filesize;
+				while (bytes_remaining > 0) {
+					int bytes_to_send;
+					if (bytes_remaining < MAX_LINE) {
+						bytes_to_send = bytes_remaining;
+					}
+					else {
+						bytes_to_send = MAX_LINE;
+					}
+					bytes_remaining -= bytes_to_send;
+					bzero((char *)&buf, sizeof(buf));
+					fread((void *)&buf, bytes_to_send, 1, fp);
+					send(sock, buf, bytes_to_send, 0);
+					printf("bytes_to_send: %d, bytes_remaining: %d\n", bytes_to_send, bytes_remaining);
+				}
+				fclose(fp);
+			}
 		}
 		else if (!strncmp(buf, "DELF", 4)) {
 		  char operation[5];
