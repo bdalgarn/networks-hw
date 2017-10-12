@@ -9,17 +9,26 @@
 #include <sys/socket.h>
 
 #include <arpa/inet.h>
-
-#define PORT 41002 // the port c
-#define HOST "student00.cse.nd.edu"
 #define MAX_LINE 2048 // max number of bytes we can get at once
 using namespace std;
+
+void delf(int,  struct sockaddr_in, char *, int32_t);
+
 
 int main(int argc, char *argv[]){
         struct hostent *hp;
         int sock, numbytes;
         char buf[MAX_LINE];
         struct sockaddr_in server;
+
+
+	if (argc != 3){
+	  exit(1);
+	}
+
+	char * HOST = argv[1];
+	int PORT = atoi(argv[2]);
+
 
         /* translate host name into IP address */
         hp = gethostbyname(HOST);
@@ -51,20 +60,23 @@ int main(int argc, char *argv[]){
 	while (1) {
 		bzero((char *)&buf, sizeof(buf));
         	fgets(buf,sizeof(buf),stdin);
-
-        	if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
-                	fprintf(stderr,"[Sendto] : %s",strerror(errno));
-                	return EXIT_FAILURE;
-        	}
 		// Check message to handle response correctly 
+
 		if (!strncmp(buf, "DWLD", 4)) {
 			char operation[5];
 			short size;
 			char filename[64];
 			// Store info sent to server
-			sscanf(buf, "%s %hi %s", operation, &size, filename);
+			sscanf(buf, "%s %s", operation, filename);
 			// Get response from server
+			size = strlen(filename);
 			bzero((char *)&buf, sizeof(buf));
+			sprintf(buf, "%s %hi %s", operation, size, filename);
+			if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
+			  fprintf(stderr,"[Sendto] : %s",strerror(errno));
+			  return EXIT_FAILURE;
+			}
+			bzero(buf, sizeof(buf));
 			recv(sock, buf, sizeof(buf), 0); 
 			int file_size;
 			sscanf(buf, "%d", &file_size); 
@@ -98,6 +110,13 @@ int main(int argc, char *argv[]){
 			
 		}
 		else if (!strncmp(buf, "DELF", 4)) {
+		  char operation[5];
+		  short filename_len;
+		  char filename[64];
+		  // Store info sent to server                                                                  
+		  sscanf(buf, "%s %s", operation, filename);
+		  filename_len = strlen(filename);
+		  delf(sock, server, filename, filename_len);
 
 		}
 		else if (!strncmp(buf, "LIST", 4)) {
@@ -113,7 +132,7 @@ int main(int argc, char *argv[]){
 
 		}
 		else if (!strncmp(buf, "QUIT", 4)) {
-
+		  break;
 		}
 	}
         close(sock);
@@ -122,3 +141,47 @@ int main(int argc, char *argv[]){
 }
 
 
+void delf(int sock,  struct sockaddr_in server, char *filename, int32_t filename_len){
+  int bytesRec;
+  char buf[MAX_LINE];
+  bzero((char *)&buf, sizeof(buf));
+  sprintf(buf, "DELF %hi %s", filename_len, filename);
+  printf("%s\n",buf);
+  if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
+    fprintf(stderr,"[Sendto] : %s",strerror(errno));
+    exit(1);
+  }
+  bzero(buf, sizeof(buf));
+  if ((bytesRec=recv(sock,buf,sizeof(buf),0))<0){
+    fprintf(stderr,"[recv] : %s",strerror(errno));
+    exit(1);
+  }
+  int num;
+  if (!strncmp(buf,"-1",2)){
+    fprintf(stdout,"The file does not exist on the server\n");
+    return;
+  }else if (!strncmp(buf,"1", 1)){
+    fprintf(stdout,"Are you sure you want to delete (YES/NO) %s?\n", filename);
+    bzero(buf, sizeof(buf));
+    fgets(buf,sizeof(buf),stdin);
+    if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
+      fprintf(stderr,"[Sendto] : %s",strerror(errno));
+      exit(1);
+    
+    }
+    if (!strncmp(buf, "NO", 2)){
+      fprintf(stdout,"Delete abandoned by user!\n");
+      return;
+    }
+    bzero(buf, sizeof(buf));
+    if ((bytesRec=recv(sock,buf,sizeof(buf),0))<0){
+      fprintf(stderr,"[recv] : %s",strerror(errno));
+      exit(1);
+    }
+    printf("%s\n", buf);
+  }
+  else return;
+  
+
+
+}

@@ -19,7 +19,7 @@ void parseOperation(char *, int);
 
 void dwld(char *, int);
 void upld(char *, int);
-void delf(char *, int);
+void delf(int, struct sockaddr_in, char *, int);
 void list();
 void mdir(char *, int);
 void rdir(char *, int);

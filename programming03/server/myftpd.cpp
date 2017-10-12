@@ -15,12 +15,12 @@
 
 using namespace std;
 
+
 #define MAX_LINE 2048
 
 int main(int argc, char * argv[]){
 
   if (argc != 2){
-    cout << "here" << endl;
     exit(1);
     
   }
@@ -29,7 +29,6 @@ int main(int argc, char * argv[]){
   char buf[MAX_LINE];
 
   int port_number = atoi(argv[1]);
-  cout << port_number << endl;
   int len;
   int s, new_s;
   int opt = 1;
@@ -65,7 +64,7 @@ int main(int argc, char * argv[]){
     if((new_s=accept(s,(struct sockaddr*)&sin, (socklen_t *)&len))<0){
       perror("simplex-talk:accept");
       exit(1);
-    }
+      }
     // Receives from client until "QUIT" is called 
     int cont = 1;
     while (cont) {
@@ -75,7 +74,7 @@ int main(int argc, char * argv[]){
     	if(len==0)break;
     	if (!strncmp(buf, "DWLD", 4)) {
 		char operation[5];
-		short int filename_len;
+		short filename_len;
 		char filename[64];
 		// Decodes information sent by client
 		sscanf(buf, "%s %hi %s", operation, &filename_len, filename);
@@ -125,7 +124,13 @@ int main(int argc, char * argv[]){
     	else if (!strncmp(buf, "UPLD ", 4)) {
     	}
     	else if (!strncmp(buf, "DELF", 4)) {
-    	}
+	  char operation[5];
+	  short filename_len;
+	  char filename[64];
+
+	  sscanf(buf, "%s %hi %s", operation, &filename_len, filename);
+	  delf(new_s, sin, filename, filename_len);
+	}
     	else if (!strncmp(buf, "LIST", 4)) {
     	}
     	else if (!strncmp(buf, "MDIR", 4)) {
@@ -144,7 +149,6 @@ int main(int argc, char * argv[]){
 
 void dwld(char *buffer, int buf_len){}
 void upld(char *buffer, int buf_len){}
-void delf(char *buffer, int buf_len){}
 void list(){}
 void mdir(char *buffer, int buf_len){
 /*    char buf[MAXSIZE];
@@ -242,4 +246,59 @@ void cdir(char *buffer, int buf_len){
 void quit() {
 	printf("Quit\n");
         exit(1);
+}
+void delf(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
+  int sizeRec;
+  //      delf(s, sin, filename, filename_len);                                                               
+  char buf[MAX_LINE];
+
+  FILE *fd = fopen(name,"r");
+  if (fd){ // Success                                                                                         
+    char command[64];
+    char return_str[MAX_LINE];
+    char temp_com [64];
+    strcpy (temp_com, "rm ");
+    sprintf(command,"%s%s",temp_com,name);
+    strcpy(buf,"1");
+
+    if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
+      fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+      exit(1);
+    }
+
+    bzero(buf, MAX_LINE);
+    if ((recv(new_s,buf,sizeof(buf),0))<0){
+      fprintf(stderr,"[recv] : %s",strerror(errno));
+      exit(1);
+    }
+    if (!strcmp(buf, "YES\n")){
+      int rtr_val = system(command);
+      bzero(buf, MAX_LINE);
+      if (rtr_val == 0){ // Successful Sys Call                                                               
+	sprintf(return_str,"%s was succesfully deleted\n",name);
+	strcpy(buf,return_str);
+      }else{             // Failed Sys Call                                                                   
+	sprintf(return_str,"%s was not deleted\n",name);
+	strcpy(buf,return_str);
+	fclose(fd);
+      }
+
+      if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
+	fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+	exit(1);
+      }
+    }
+    else return;
+
+
+
+  }
+  else {
+    strcpy(buf,"-1");
+    if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
+      fprintf(stderr,"[MDIR sendto #1] : %s",strerror(errno));
+      exit(1);
+    }
+  }
+  /* Sends Message */ 
 }
