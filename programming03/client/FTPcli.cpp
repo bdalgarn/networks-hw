@@ -7,6 +7,8 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include <arpa/inet.h>
 #define MAX_LINE 2048 // max number of bytes we can get at once
@@ -89,8 +91,13 @@ int main(int argc, char *argv[]){
 				FILE *fp = fopen(filename, "w");
 				printf("File size: %d\n", file_size);
 				int bytes_remaining = file_size;
-				size_t bytes_read = 0;
 				bzero((char *)&buf, sizeof(buf));
+				
+				// Set up timer
+				struct timeval begin_tv;
+				struct timeval end_tv;
+				gettimeofday(&begin_tv, NULL);
+
 				while (bytes_remaining > 0) {
 					int bytes_to_read;
 					if (bytes_remaining < MAX_LINE) {
@@ -101,11 +108,16 @@ int main(int argc, char *argv[]){
 					}
 					bytes_remaining -= bytes_to_read;
 					printf("bytes to read: %d, bytes remaining: %d\n", bytes_to_read, bytes_remaining);
-					bytes_read += recv(sock, buf, bytes_to_read, 0);   
+					recv(sock, buf, bytes_to_read, 0);   
 					fwrite((void *)&buf, bytes_to_read, 1, fp);	
 				}
 				fclose(fp);
+				gettimeofday(&end_tv, NULL);
+				int time_microsec = (end_tv.tv_sec * 1000000 + end_tv.tv_usec) - (begin_tv.tv_sec * 1000000 + begin_tv.tv_usec);
+				double time_sec = (double)time_microsec / 1000000.0;
+				double throughput = (double)file_size / time_sec / 1000000.0; // In MB/s
 				printf("The file download was successful.\n");
+				printf("%d bytes read in %.2lf seconds: %.2lf Megabytes/sec\n", file_size, time_sec, throughput);
 			}
 		}
 		else if (!strncmp(buf, "UPLD", 4)) {
