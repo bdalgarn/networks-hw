@@ -107,7 +107,6 @@ int main(int argc, char *argv[]){
 						bytes_to_read = MAX_LINE;
 					}
 					bytes_remaining -= bytes_to_read;
-					printf("bytes to read: %d, bytes remaining: %d\n", bytes_to_read, bytes_remaining);
 					recv(sock, buf, bytes_to_read, 0);   
 					fwrite((void *)&buf, bytes_to_read, 1, fp);	
 				}
@@ -126,7 +125,6 @@ int main(int argc, char *argv[]){
 			char filename[64];
 			// Store info sent to server
 			sscanf(buf, "%s %hi %s", operation, &size, filename);
-			printf("%s %hi %s\n", operation, size, filename);
 			// Get response from server
 			size = strlen(filename);
 			bzero((char *)&buf, sizeof(buf));
@@ -153,7 +151,6 @@ int main(int argc, char *argv[]){
 				else {
 					fseek(fp, 0L, SEEK_END);
 					filesize = ftell(fp);
-					printf("Size of file: %d\n", filesize);
 					rewind(fp);
 				}
 				bzero((char *)&buf, sizeof(buf));
@@ -175,9 +172,16 @@ int main(int argc, char *argv[]){
 					bzero((char *)&buf, sizeof(buf));
 					fread((void *)&buf, bytes_to_send, 1, fp);
 					send(sock, buf, bytes_to_send, 0);
-					printf("bytes_to_send: %d, bytes_remaining: %d\n", bytes_to_send, bytes_remaining);
 				}
 				fclose(fp);
+
+				// Get throughput info from server
+				char tpMssg[64];
+				bzero((char *)&buf, sizeof(buf));
+				recv(sock, buf, sizeof(buf), 0);
+				memcpy(tpMssg, buf, sizeof(tpMssg));
+				printf("File upload successful.\n");
+				printf("%s\n", tpMssg);
 			}
 		}
 		else if (!strncmp(buf, "DELF", 4)) {

@@ -68,9 +68,7 @@ int main(int argc, char * argv[]){
     // Receives from client until "QUIT" is called 
     int cont = 1;
     while (cont) {
-    	if((len=recv(new_s,buf,sizeof(buf),0))==-1){
-      	perror("ServerReceivedError!");
-      	exit(1);}
+    	len=recv(new_s,buf,sizeof(buf),0);
     	if(len==0)break;
     	if (!strncmp(buf, "DWLD", 4)) {
 		char operation[5];
@@ -145,6 +143,12 @@ int main(int argc, char * argv[]){
 		int bytes_remaining = file_size;
 		size_t bytes_read = 0;
 		bzero((char *)&buf, sizeof(buf));
+
+		// Set up timer
+		struct timeval begin_tv;
+		struct timeval end_tv;
+		gettimeofday(&begin_tv, NULL);
+
 		while (bytes_remaining > 0) {
 			int bytes_to_read;
 			if (bytes_remaining < MAX_LINE) {
@@ -158,6 +162,15 @@ int main(int argc, char * argv[]){
 			fwrite((void *)&buf, bytes_to_read, 1, fp);
 		}
 		fclose(fp);
+		gettimeofday(&end_tv, NULL);
+		int time_microsec = (end_tv.tv_sec * 1000000 + end_tv.tv_usec) - (begin_tv.tv_sec * 1000000 + begin_tv.tv_usec);
+		double time_sec = (double)time_microsec / 1000000.0;
+		double throughput = (double)file_size / time_sec / 1000000.0;
+
+		// Send throughput results to client
+		bzero((char *)&buf, sizeof(buf));
+		sprintf(buf, "%d bytes read in %.2lf seconds: %.2lf Megabytes/sec\n", file_size, time_sec, throughput);
+		send(new_s, buf, sizeof(buf), 0);
     	}
     	else if (!strncmp(buf, "DELF", 4)) {
 	  char operation[5];
