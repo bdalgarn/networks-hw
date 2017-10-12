@@ -136,7 +136,6 @@ int main(int argc, char * argv[]){
 		// Receive file from client
 		FILE *fp = fopen(filename, "w");
 		int bytes_remaining = file_size;
-		size_t bytes_read = 0;
 		bzero((char *)&buf, sizeof(buf));
 
 		// Set up timer
