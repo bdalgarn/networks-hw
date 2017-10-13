@@ -108,7 +108,15 @@ void upld(int new_s, char * filename, short filename_len){
     fclose(fp);
   }
 
+  gettimeofday(&end_tv, NULL);
+  int time_microsec = (end_tv.tv_sec * 1000000 + end_tv.tv_usec) - (begin_tv.tv_sec * 1000000 + begin_tv.tv_usec);
+  double time_sec = (double)time_microsec / 1000000.0;
+  double throughput = (double)file_size / time_sec / 1000000.0;
 
+  // Send throughput results to client
+  bzero((char *)&buf, sizeof(buf));
+  sprintf(buf, "%d bytes read in %.2lf seconds: %.2lf Megabytes/sec\n", file_size, time_sec, throughput);
+  send(new_s, buf, sizeof(buf), 0);
 
 
  }
