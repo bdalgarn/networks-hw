@@ -19,7 +19,7 @@ using namespace std;
 
 int main(int argc, char *argv[]){
         struct hostent *hp;
-        int sock, numbytes;
+        int sock;
         char buf[MAX_LINE];
         struct sockaddr_in server;
 

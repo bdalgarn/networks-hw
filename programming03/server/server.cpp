@@ -23,6 +23,7 @@ void parseOperation(char *, int);
 void dwld(int new_s, char *filename, int filename_len){
   char buf[MAX_LINE];
 
+  // Checks for size of file
   FILE *fp = fopen(filename, "r");
   int size;
   if (fp == NULL) {
@@ -35,26 +36,26 @@ void dwld(int new_s, char *filename, int filename_len){
     printf("Size of file: %d\n", size);
     rewind(fp);
   }
-
-  // Responds to client                                                                                               
+ 
+  // Responds to client
   bzero((char *)&buf, sizeof(buf));
   sprintf(buf, "%d", size);
-  send(new_s, buf, sizeof(buf), 0);
-
-  // Sends file to client                                                                                             
+  send(new_s, buf, sizeof(buf), 0); 
+ 
+  // Sends file to client
   if (size >= 0) {
     int bytes_remaining = size;
     size_t bytes_sent = 0;
     while (bytes_remaining > 0) {
       int bytes_to_send;
       if (bytes_remaining < MAX_LINE) {
-        bytes_to_send = bytes_remaining;
+	bytes_to_send = bytes_remaining;
       }
       else {
-        bytes_to_send = MAX_LINE;
+	bytes_to_send = MAX_LINE;
       }
       bytes_remaining -= bytes_to_send;
-
+ 
       bzero((char *)&buf, sizeof(buf));
       fread((void *)&buf, bytes_to_send, 1, fp);
       bytes_sent += send(new_s, buf, bytes_to_send, 0);
@@ -62,62 +63,52 @@ void dwld(int new_s, char *filename, int filename_len){
     }
     fclose(fp);
   }
-
 }
 void upld(int new_s, char * filename, short filename_len){
   char buf[MAX_LINE];
 
-  // Checks for size of file                                                                                          
-  FILE *fp = fopen(filename, "r");
-  int size;
-  if (fp == NULL) {
-    size = -1;
-    printf("File not in local directory\n");
-  }
-  else {
-    fseek(fp, 0L, SEEK_END);
-    size = ftell(fp);
-    printf("Size of file: %d\n", size);
-    rewind(fp);
-  }
-
-  // Responds to client                                                                                               
   bzero((char *)&buf, sizeof(buf));
-  sprintf(buf, "%d", size);
+  sprintf(buf, "%d", 1);
   send(new_s, buf, sizeof(buf), 0);
-
-  // Sends file to client                                                                                             
-  if (size >= 0) {
-    int bytes_remaining = size;
-    size_t bytes_sent = 0;
-    while (bytes_remaining > 0) {
-      int bytes_to_send;
-      if (bytes_remaining < MAX_LINE) {
-        bytes_to_send = bytes_remaining;
-      }
-      else {
-        bytes_to_send = MAX_LINE;
-      }
-      bytes_remaining -= bytes_to_send;
-
-      bzero((char *)&buf, sizeof(buf));
-      fread((void *)&buf, bytes_to_send, 1, fp);
-      bytes_sent += send(new_s, buf, bytes_to_send, 0);
-      printf("bytes_to_send: %d, bytes_remaining %d\n", bytes_to_send, bytes_remaining);
-    }
-    fclose(fp);
-  }
-
-  gettimeofday(&end_tv, NULL);
-  int time_microsec = (end_tv.tv_sec * 1000000 + end_tv.tv_usec) - (begin_tv.tv_sec * 1000000 + begin_tv.tv_usec);
-  double time_sec = (double)time_microsec / 1000000.0;
-  double throughput = (double)file_size / time_sec / 1000000.0;
-
-  // Send throughput results to client
+ 
+  // Receives size of file from client
   bzero((char *)&buf, sizeof(buf));
-  sprintf(buf, "%d bytes read in %.2lf seconds: %.2lf Megabytes/sec\n", file_size, time_sec, throughput);
-  send(new_s, buf, sizeof(buf), 0);
-
+  recv(new_s, buf, sizeof(buf), 0);
+  int file_size;
+  sscanf(buf, "%d", &file_size);
+  
+  // Receive file from client
+  FILE *fp = fopen(filename, "w");
+  int bytes_remaining = file_size;
+  bzero((char *)&buf, sizeof(buf));
+ 
+   // Set up timer
+   struct timeval begin_tv;
+   struct timeval end_tv;
+   gettimeofday(&begin_tv, NULL);
+ 
+   while (bytes_remaining > 0) {
+     int bytes_to_read;
+     if (bytes_remaining < MAX_LINE) {
+       bytes_to_read = bytes_remaining;
+     }
+     else {
+       bytes_to_read = MAX_LINE;
+     }
+     bytes_remaining -= bytes_to_read;
+     recv(new_s, buf, bytes_to_read, 0);
+	 fwrite((void *)&buf, bytes_to_read, 1, fp);
+       }
+       fclose(fp);
+       gettimeofday(&end_tv, NULL);
+       int time_microsec = (end_tv.tv_sec * 1000000 + end_tv.tv_usec) - (begin_tv.tv_sec * 1000000 + begin_tv.tv_usec);
+       double time_sec = (double)time_microsec / 1000000.0;
+       double throughput = (double)file_size / time_sec / 1000000.0;
+ 
+   // Send throughput results to client
+   bzero((char *)&buf, sizeof(buf));
+   sprintf(buf, "%d bytes read in %.2lf seconds: %.2lf Megabytes/sec\n", file_size, time_sec, throughput);
+ send(new_s, buf, sizeof(buf), 0);
 
  }
 
@@ -125,7 +116,7 @@ void upld(int new_s, char * filename, short filename_len){
 
 
 void list_func(int new_s){
-  char *cmd = "ls -l";
+  char cmd[8] = "ls -l";
   char buf[MAX_LINE];
   char cat[MAX_LINE];
   FILE *listing;
@@ -154,12 +145,10 @@ void list_func(int new_s){
 
 
 void cdir(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
-  int sizeRec;
   char buf[MAX_LINE];
   DIR *d = opendir(name);
   if (d!=NULL){ // Success                                                                                         
     char command[64];
-    char return_str[MAX_LINE];
     char temp_com [64];
     strcpy (temp_com, "cd ");
     sprintf(command,"%s%s",temp_com,name);
@@ -190,15 +179,15 @@ void cdir(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
 }
 
 void rdir(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
-  int sizeRec;
   char buf[MAX_LINE];
   DIR *d = opendir(name);
+  printf("here\n");
   if (d){ // Success                                                                                         
     char command[64];
-    char return_str[MAX_LINE];
     char temp_com [64];
-    strcpy (temp_com, "rm ");
+    strcpy (temp_com, "rmdir ");
     sprintf(command,"%s%s",temp_com,name);
+    printf("%s\n", command);
     strcpy(buf,"1");
 
     if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
@@ -241,12 +230,10 @@ void rdir(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
 }
 
 void mdir(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
-  int sizeRec;
   char buf[MAX_LINE];
   DIR *d = opendir(name);
   if (d==NULL){ // Success                                                                                         
     char command[64];
-    char return_str[MAX_LINE];
     char temp_com [64];
     strcpy (temp_com, "mkdir ");
     sprintf(command,"%s%s",temp_com,name);
@@ -283,7 +270,6 @@ void quit() {
   exit(1);
 }
 void delf(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
-  int sizeRec;
   char buf[MAX_LINE];
 
   FILE *fd = fopen(name,"r");

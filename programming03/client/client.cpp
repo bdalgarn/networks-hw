@@ -121,6 +121,14 @@ void upld(int sock, struct sockaddr_in server, char * filename, int filename_len
       printf("bytes_to_send: %d, bytes_remaining: %d\n", bytes_to_send, bytes_remaining);
     }
     fclose(fp);
+    char tpMssg[64];
+    bzero((char *)&buf, sizeof(buf));
+    recv(sock, buf, sizeof(buf), 0);
+    memcpy(tpMssg, buf, sizeof(tpMssg));
+    printf("File upload successful.\n");
+    printf("%s\n", tpMssg);
+
+
   }
 
 
@@ -198,7 +206,6 @@ void rdir(int sock,  struct sockaddr_in server, char *filename, int32_t filename
     fprintf(stderr,"[recv] : %s",strerror(errno));
     exit(1);
   }
-  int num;
   if (!strncmp(buf,"-1",2)){
     fprintf(stdout,"The directory does not exist on the server\n");
     return;
@@ -235,26 +242,23 @@ void list_func(int sock, struct sockaddr_in server){
   }
 
   char buf[2048];
-  int n;
   bzero((char *)&buf,sizeof(buf));
-  if ((n=recv(sock,buf,2048,0))<0){
-    fprintf(stderr,"[LIST recv] : %S",strerror(errno));
+  if ((recv(sock,buf,2048,0))<0){
+    fprintf(stderr,"[LIST recv] : %s",strerror(errno));
   }
-  int32_t size;
+  short size;
   sscanf(buf,"%hi",&size);
   if (size <= 0) return;
-  ssize_t counted=0;
 
   bzero((char *)&buf,sizeof(buf));
-  if ((n=recv(sock,buf,2048,0))<0){
-    fprintf(stderr,"[LIST recv] : %S",strerror(errno));
+  if ((recv(sock,buf,2048,0))<0){
+    fprintf(stderr,"[LIST recv] : %s",strerror(errno));
   }
   printf("%s\n", buf);
 }
 
 void delf(int sock,  struct sockaddr_in server, char *filename, int32_t filename_len){
   printf("here");
-  int bytesRec;
   char buf[2048];
   bzero((char *)&buf, sizeof(buf));
   sprintf(buf, "DELF %hi %s", filename_len, filename);
@@ -264,11 +268,10 @@ void delf(int sock,  struct sockaddr_in server, char *filename, int32_t filename
     exit(1);
   }
   bzero(buf, sizeof(buf));
-  if ((bytesRec=recv(sock,buf,sizeof(buf),0))<0){
+  if ((recv(sock,buf,sizeof(buf),0))<0){
     fprintf(stderr,"[recv] : %s",strerror(errno));
     exit(1);
   }
-  int num;
   if (!strncmp(buf,"-1",2)){
     fprintf(stdout,"The file does not exist on the server\n");
     return;
@@ -298,7 +301,7 @@ void delf(int sock,  struct sockaddr_in server, char *filename, int32_t filename
 	return;
       }
       bzero(buf, sizeof(buf));
-      if ((bytesRec=recv(sock,buf,sizeof(buf),0))<0){
+      if ((recv(sock,buf,sizeof(buf),0))<0){
 	fprintf(stderr,"[recv] : %s",strerror(errno));
 	exit(1);
       }

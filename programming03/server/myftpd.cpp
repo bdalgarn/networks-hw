@@ -71,6 +71,7 @@ int main(int argc, char * argv[]){
       char operation[5];
       short filename_len;
       char filename[64];
+      bzero(buf, sizeof(buf));
     	len=recv(new_s,buf,sizeof(buf),0);
     	if (!strncmp(buf, "DWLD", 4)) {
 		sscanf(buf, "%s %hi %s", operation, &filename_len, filename);
