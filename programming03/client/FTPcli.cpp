@@ -1,3 +1,16 @@
+/* FTPclient.cpp                                                                                                               
+Brianna Hoelting bhoeltin                                                                                                   
+Anthony DiFalco adifalco                                                                                                    
+Ben Dalgarn bdalgarn                                                                                                        
+                                                                                                                            
+This is the main file for the client. This will take in the commands from the user and deploy the correct operation. Additionally, it is responsible for setting up the initial connection to the server.                                              
+                                                                                                                            
+*/
+
+
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
