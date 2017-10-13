@@ -47,7 +47,6 @@ void dwld(int new_s, char *filename, int filename_len){
   else {
     fseek(fp, 0L, SEEK_END);
     size = ftell(fp);
-    printf("Size of file: %d\n", size);
     rewind(fp);
   }
  
@@ -73,7 +72,7 @@ void dwld(int new_s, char *filename, int filename_len){
       bzero((char *)&buf, sizeof(buf));
       fread((void *)&buf, bytes_to_send, 1, fp);
       bytes_sent += send(new_s, buf, bytes_to_send, 0);
-      printf("bytes_to_send: %d, bytes_remaining %d\n", bytes_to_send, bytes_remaining);
+      //printf("bytes_to_send: %d, bytes_remaining %d\n", bytes_to_send, bytes_remaining);
     }
     fclose(fp);
   }
@@ -195,13 +194,11 @@ void cdir(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
 void rdir(int new_s,  struct sockaddr_in sin, char *name, int32_t size){
   char buf[MAX_LINE];
   DIR *d = opendir(name);
-  printf("here\n");
   if (d){ // Success                                                                                         
     char command[64];
     char temp_com [64];
     strcpy (temp_com, "rmdir ");
     sprintf(command,"%s%s",temp_com,name);
-    printf("%s\n", command);
     strcpy(buf,"1");
 
     if ((sendto(new_s,buf,sizeof(buf),0,(struct sockaddr *)&sin,sizeof(struct sockaddr)))<0){
