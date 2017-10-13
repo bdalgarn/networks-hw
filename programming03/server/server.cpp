@@ -1,3 +1,17 @@
+/* server.cpp 
+Brianna Hoelting bhoeltin
+Ben Dalgarn bdalgarn
+Anthony DiFalco adifalco
+
+
+This is the implementation of all the operations that the server will complete. It is linked to the header files in the server.h.
+
+*/
+
+
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

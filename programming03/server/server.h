@@ -1,3 +1,15 @@
+/*server.h
+
+Brianna Hoelting bhoeltin
+Anthony DiFalco adifalco
+Ben Dalgarn bdalgarn
+
+These are the headers for the operations fucntions
+
+*/
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

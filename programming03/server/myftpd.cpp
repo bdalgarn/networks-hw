@@ -1,3 +1,16 @@
+/* myftdp.cpp
+Brianna Hoelting bhoeltin
+Anthony DiFalco adifalco
+Ben Dalgarn bdalgarn
+
+This is the main file for the server. This will take in the commands from the client and deploy the correct operation. Additionally, it is responsible for setting up the initial connection to the port.
+
+*/
+
+
+
+
+
 #include <stdio.h>
 #include <iostream>
 #include <stdlib.h>
