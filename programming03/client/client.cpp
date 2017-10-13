@@ -35,7 +35,6 @@ void dwld(int sock, struct sockaddr_in server, char * filename, int filename_len
   }
   else {
     FILE *fp = fopen(filename, "w");
-    printf("File size: %d\n", file_size);
     int bytes_remaining = file_size;
     bzero((char *)&buf, sizeof(buf));
 
@@ -52,7 +51,6 @@ void dwld(int sock, struct sockaddr_in server, char * filename, int filename_len
 	bytes_to_read = 2048;
       }
       bytes_remaining -= bytes_to_read;
-      printf("bytes to read: %d, bytes remaining: %d\n", bytes_to_read, bytes_remaining);
       recv(sock, buf, bytes_to_read, 0);
       fwrite((void *)&buf, bytes_to_read, 1, fp);
     }
@@ -118,7 +116,7 @@ void upld(int sock, struct sockaddr_in server, char * filename, int filename_len
       bzero((char *)&buf, sizeof(buf));
       fread((void *)&buf, bytes_to_send, 1, fp);
       send(sock, buf, bytes_to_send, 0);
-      printf("bytes_to_send: %d, bytes_remaining: %d\n", bytes_to_send, bytes_remaining);
+      //printf("bytes_to_send: %d, bytes_remaining: %d\n", bytes_to_send, bytes_remaining);
     }
     fclose(fp);
     char tpMssg[64];
@@ -140,7 +138,7 @@ void upld(int sock, struct sockaddr_in server, char * filename, int filename_len
      char buf[2048];
      bzero((char *)&buf, sizeof(buf));
      sprintf(buf, "MDIR %hi %s", filename_len, filename);
-     printf("%s\n",buf);
+     //printf("%s\n",buf);
      if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
        fprintf(stderr,"[Sendto] : %s",strerror(errno));
        exit(1);
@@ -168,7 +166,7 @@ void cdir(int sock,  struct sockaddr_in server, char *filename, int32_t filename
   char buf[2048];
   bzero((char *)&buf, sizeof(buf));
   sprintf(buf, "CDIR %hi %s", filename_len, filename);
-  printf("%s\n",buf);
+  //printf("%s\n",buf);
   if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
     fprintf(stderr,"[Sendto] : %s",strerror(errno));
     exit(1);
@@ -196,7 +194,7 @@ void rdir(int sock,  struct sockaddr_in server, char *filename, int32_t filename
   char buf[2048];
   bzero((char *)&buf, sizeof(buf));
   sprintf(buf, "RDIR %hi %s", filename_len, filename);
-  printf("%s\n",buf);
+  //printf("%s\n",buf);
   if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
     fprintf(stderr,"[Sendto] : %s",strerror(errno));
     exit(1);
@@ -227,7 +225,12 @@ void rdir(int sock,  struct sockaddr_in server, char *filename, int32_t filename
       fprintf(stderr,"[recv] : %s",strerror(errno));
       exit(1);
     }
-    printf("%s\n", buf);
+    if(!strncmp(buf, "1", 1)) {
+    	printf("Directory deleted\n");
+    }
+    else {
+	printf("Failed to delete directory\n");
+    }
   }
   else return;
 }
@@ -258,11 +261,11 @@ void list_func(int sock, struct sockaddr_in server){
 }
 
 void delf(int sock,  struct sockaddr_in server, char *filename, int32_t filename_len){
-  printf("here");
+  //printf("here");
   char buf[2048];
   bzero((char *)&buf, sizeof(buf));
   sprintf(buf, "DELF %hi %s", filename_len, filename);
-  printf("%s\n",buf);
+  //printf("%s\n",buf);
   if ((sendto(sock,buf,sizeof(buf),0,(struct sockaddr *)&server, sizeof(struct sockaddr))) < 0){
     fprintf(stderr,"[Sendto] : %s",strerror(errno));
     exit(1);
