@@ -4,18 +4,23 @@ LD=             g++
 LDFLAGS=
 AR=             ar
 ARFLAGS=        rcs
-TARGETS=                        myftpd\
-                                myftpd.o
+TARGETS=                      	server.o\
+                                myftpd.o\
+				myftpd
 
 all:            $(TARGETS)
 
 myftpd: myftpd.o
 	@echo "Linking $@..."
-	@$(LD) $(LFLAGS) -o myftpd myftpd.o
+	@$(LD) $(LFLAGS) -o myftpd myftpd.o server.o
 
 myftpd.o: myftpd.cpp
 	@echo "Compiling $@..."
 	@$(CC) $(CFLAGS) -c -o myftpd.o myftpd.cpp
+
+server.o: server.cpp
+	@echo "Compiling $@..."
+	@$(CC) $(CFLAGS) -c -o server.o server.cpp
 
 clean:
 	@echo Cleaning...
