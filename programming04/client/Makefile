@@ -1,5 +1,5 @@
 CXX             = g++
-CXXFLAGS        = -g -gdwarf-2 -std=gnu++11 -Wall 
+CXXFLAGS        = -g -gdwarf-2 -std=gnu++11 -Wall -Iinclude
 LD              = g++
 LDFLAGS         = -Llib
 LNKFLAGS        = -lpthread
@@ -17,7 +17,7 @@ all:            $(TARGETS)
 $(CLIENT):      $(CLIENT_OBJECTS)
 	$(AR) $(ARFLAGS) $@ $^
 
-client/%.o: src/client/%.cpp $(wildcard ../include/ps_client/*.h)
+client/%.o: %.cpp $(wildcard ../include/ps_client/*.h)
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 clean:
