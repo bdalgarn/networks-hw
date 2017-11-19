@@ -11,10 +11,10 @@
 #include <sys/time.h>
 #include <errno.h>
 #include <iostream>
-#include "ps_client/client.h"
-#include "ps_client/thread.h"
-#include "ps_client/callback.h"
-#include "ps_client/queue.h"
+#include "client.h"
+#include "thread.h"
+#include "callback.h"
+#include "queue.h"
 
 // function that connects to the socket
 FILE * socket_connect(const char *host, const char *port){
@@ -65,45 +65,6 @@ FILE * socket_connect(const char *host, const char *port){
   return client_file;
 }
 
-// function that creates the functionality of the sender thread
-void * sender(void * arg) {
-  Client * client = (Client * ) arg; // creates a Client object
-
-  FILE *server_file = socket_connect(client->getHost(), client->getPort()); // calls socket_connect to create the socket
-  // if server_file is NULL then the socket connection didn't work and an error message is printed
-  if (server_file == NULL) {
-    fprintf(stderr, "ERROR: Unable to connect to %s:%s: %s", client->getHost(), client->getPort(), strerror(errno));
-  }
-
-  //  client->identify(server_file); // call the identify function
-
-  while(!client->shutdown()){ // while loop that runs as long as the client isn't supposed to shut down
-    Message m = (client->outgoing).pop(); // pops a message from the outgoing queue
-    char buffer[BUFSIZ];
-    // creates a PUBLISH message and sends it to the server if the type is PUBLISH
-    if(m.type == "PUBLISH"){
-      char body[BUFSIZ];
-      sprintf(body, "%s", (m.body).c_str());
-      int body_length = strlen(body);
-      sprintf(buffer, "PUBLISH %s %hi\n%s", (m.topic).c_str(), body_length, (m.body).c_str());
-      client->sendToServer(server_file, buffer);
-    }
-    // creates a DISCONNECT message and sends it to the server if the type is DISCONNECT
-    else if(m.type == "DISCONNECT"){
-      sprintf(buffer, "DISCONNECT %s %hi\n", (m.sender).c_str(), (int)m.nonce);
-      client->sendToServer(server_file, buffer);
-    }
-    char recvBuffer[BUFSIZ];
-    char returnBuffer[BUFSIZ];
-    sprintf(returnBuffer,"%s",client->recvFromServer(server_file, recvBuffer)); // gets the response back from the server
-  }
-
-  int * p = new int; // use this to set the value of the void *
-  void * retval = p; // have to return a void * from the function
-  fclose(server_file); // close the socket connection
-  delete p; // need to delete the int that was allocated
-  return retval;
-}
 
 // function that creates the functionality of the receiver thread
 void * receiver(void * arg) {

@@ -52,12 +52,10 @@ void Client::publish(const char * topic, const char * message, size_t length){
 
 // the run function starts and joins the sender and receiver threads
 void Client::run(){
-  Thread thread1, thread2;
+  Thread thread1;
 
-  thread1.start(sender, this);
-  thread2.start(receiver,this);
+  thread1.start(receiver,this);
   thread1.detach();
-  thread2.detach();
 
   std::map<std::string,Callback *>::iterator it;
 }
