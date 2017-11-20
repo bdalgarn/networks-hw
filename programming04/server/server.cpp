@@ -18,7 +18,7 @@ This is the implementation of the server. It will interact with the client and p
 #include <errno.h>
 #include <map>
 #include <queue>
-#include "login.cpp"
+#include "login.c"
 #define MAX_SIZE 10
 #define DEBUG 0
 using namespace std;
