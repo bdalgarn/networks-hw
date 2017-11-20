@@ -1,4 +1,14 @@
 // queue.h: PS Queue Library -------------------------------------------------
+/*  
+Brianna Hoelting bhoeltin
+Anthony DiFalco adifalco 
+Ben Dalgarn bdalgarn 
+
+This is the implementaiton of a thread safe queue. The only thing different from a normal queeue is that it has locks in its push and pop functions. 
+
+*/
+
+
 
 #pragma once
 
@@ -15,28 +25,28 @@
 
 
 // macros that perform thread operations and check that they complete with out error
-#define PTHREAD_CHECK(f) \
-    if ((rc = (f)) != 0) { \
-        fprintf(stderr, "%s\n", strerror(rc)); \
-        exit(EXIT_FAILURE); \
+#define PTHREAD_CHECK(f) 
+    if ((rc = (f)) != 0) { 
+        fprintf(stderr, "%s\n", strerror(rc)); 
+        exit(EXIT_FAILURE); 
     }
 
-#define Pthread_mutex_init(l, a) \
+#define Pthread_mutex_init(l, a) 
     PTHREAD_CHECK(pthread_mutex_init(l, a));
 
-#define Pthread_mutex_lock(l) \
+#define Pthread_mutex_lock(l) 
     PTHREAD_CHECK(pthread_mutex_lock((pthread_mutex_t *)(l)));
 
-#define Pthread_mutex_unlock(l) \
+#define Pthread_mutex_unlock(l) 
     PTHREAD_CHECK(pthread_mutex_unlock((pthread_mutex_t *)(l)));
 
-#define Pthread_cond_init(c, a) \
+#define Pthread_cond_init(c, a) 
     PTHREAD_CHECK(pthread_cond_init((c), (a)));
 
-#define Pthread_cond_wait(c, l) \
+#define Pthread_cond_wait(c, l) 
     PTHREAD_CHECK(pthread_cond_wait((c), (l)));
 
-#define Pthread_cond_signal(c) \
+#define Pthread_cond_signal(c) 
     PTHREAD_CHECK(pthread_cond_signal((pthread_cond_t *)(c)));
 
 const size_t QUEUE_MAX = 1000;
