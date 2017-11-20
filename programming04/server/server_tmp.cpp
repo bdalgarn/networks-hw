@@ -76,12 +76,12 @@ int main(int argc , char *argv[]){
         new_sock = (int *)malloc(1);    // Allocate space
         *new_sock = client_sock; // Duplicae address
 
-       char * user_name;// = "Ben";
+       const char * user_name = "Ben";
 
        map <char *, queue <char *> *> users; 		   
-       struct arg_t args {
+       arg_t args {
 		(void *)&qs, // user_qs
-		user_name, // user	
+		(char *)user_name, // user	
 		&users, // user_map	   
 		*new_sock // sock
        };
@@ -105,46 +105,60 @@ void *connection_handler(void *_args){
     arg_t *args = (arg_t *)_args;
     /* Initializations */
     int sock = args->sock;
-    char * to_be_written,user;  // This is going to be what we need to write to the users queue
-    char * to_be_recieved; // This is what we need to send to our client (messages from others in their queue)
-    ssize_t read_size = BUFSIZ;
-    char *message;
+    ssize_t size = BUFSIZ;
     char client_message[BUFSIZ];
 	
     // Get username
-    recv(sock, (void *)client_message, BUFSIZ, 0);
+    size = recv(sock, (void *)client_message, BUFSIZ, 0);
+    if (DEBUG==1) check_error(size);
+
     char username[BUFSIZ]; 
     strcpy(username, client_message);
     //printf("Received username: %s\n", client_message);
     char password[BUFSIZ]; 
     if (loginUser((const char *)username, (char *)password) == 1) {
 	strcpy(client_message, "Please enter your password: ");
-	send(sock, (void *)client_message, BUFSIZ, 0);
+	size = send(sock, (void *)client_message, BUFSIZ, 0);
+    	if (DEBUG==1) check_error(size);
+
 	// Get response
     	bzero(&client_message, BUFSIZ);	
-    	recv(sock, (void *)client_message, BUFSIZ, 0);
+    	size = recv(sock, (void *)client_message, BUFSIZ, 0);
+    	if (DEBUG==1) check_error(size);
+
 	while (strncmp(client_message, password, strlen(password)) != 0) {
     		bzero(&client_message, BUFSIZ);	
 		strcpy(client_message, "Invalid password.");
-		send(sock, (void *)client_message, BUFSIZ, 0);
+		size = send(sock, (void *)client_message, BUFSIZ, 0);
+    		if (DEBUG==1) check_error(size);
+
     		bzero(&password, BUFSIZ);	
-    		recv(sock, (void *)password, BUFSIZ, 0);
+    		size = recv(sock, (void *)password, BUFSIZ, 0);
+    		if (DEBUG==1) check_error(size);
+
 	}
 	// Successful login
 	strcpy(client_message, "ACK_LOG");
-	send(sock, (void *)client_message, BUFSIZ, 0);
+	size = send(sock, (void *)client_message, BUFSIZ, 0);
+    	if (DEBUG==1) check_error(size);
+
     }
     else {
 	bzero(&client_message, BUFSIZ);	
 	strcpy(client_message, "Please enter a password: ");
-	send(sock, (void *)client_message, BUFSIZ, 0);
+	size = send(sock, (void *)client_message, BUFSIZ, 0);
+    	if (DEBUG==1) check_error(size);
+
 	// Get response
     	bzero(&password, BUFSIZ);	
-    	recv(sock, (void *)password, BUFSIZ, 0);
+    	size = recv(sock, (void *)password, BUFSIZ, 0);
+    	if (DEBUG==1) check_error(size);
+
 	handleNewUser((const char*)username, (const char *)password);
 	bzero(client_message, BUFSIZ);
 	strcpy(client_message, "ACK_REG"); // Acknowledge registration of new user
-	send(sock, (void *)client_message, BUFSIZ, 0);
+	size = send(sock, (void *)client_message, BUFSIZ, 0);
+    	if (DEBUG==1) check_error(size);
     }
 
 
@@ -186,7 +200,7 @@ void *connection_handler(void *_args){
 
 char * get_message(int sock, int mode){
     /* Build Probe */
-    char * buf;
+    char buf[BUFSIZ];
     if (mode==1){
        strcpy(buf, "P,Server,Please Enter Your Message : ");
     }else if (mode==0){
@@ -196,16 +210,16 @@ char * get_message(int sock, int mode){
     }
     /* Send Probe */
     ssize_t size = send(sock,(void *)buf,sizeof(buf),0);
+    if (DEBUG==1) check_error(size);
+
     char *cat = (char *)malloc(BUFSIZ*4);
     bzero(cat,BUFSIZ*4);
-    if (DEBUG==1) check_error(size);
     /* Get Message */
     char client_message[BUFSIZ];
-    ssize_t read_size;
-    while((read_size = recv(sock,client_message,BUFSIZ,0))>0){
+    while((size = recv(sock,client_message,BUFSIZ,0))>0){
 	strcat(cat,client_message);
     }
-    if (DEBUG==1) check_error(read_size);
+    if (DEBUG==1) check_error(size);
     return cat;
 }
 
@@ -247,12 +261,12 @@ void write_it(queue <char *> ** qs, char * user, map<char *,queue<char *> *> * d
     /* Inits */
     int sock = sfd;
     ssize_t read_size;
-    char *message, *client_message, *recipient;
+    char client_message[BUFSIZ], *recipient;
     char *formatted_buf;
     char *cat_buf;
 
     /* Read Message Type */
-    read_size = recv(sock ,client_message,BUFSIZ,0);
+    read_size = recv(sock ,(char *)client_message,BUFSIZ,0);
     if (DEBUG==1) check_error(read_size);
     bzero(client_message,BUFSIZ*4);
 
@@ -273,7 +287,7 @@ void write_it(queue <char *> ** qs, char * user, map<char *,queue<char *> *> * d
            recipient = get_message(sock,0);
 	   cat_buf = get_message(sock,1);
            for (int i = 0; i < MAX_SIZE; i++){
-              if (qs[i]==(*dict)[recipient]){
+              if (qs[i]==(queue <char *> *)(*dict)[recipient]){
                   formatted_buf = format_msg(user,0,cat_buf,*dict);
 		  qs[i]->push(formatted_buf);
 	      }
