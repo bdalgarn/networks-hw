@@ -8,8 +8,9 @@
 #include <errno.h>
 #include <map>
 #include <queue>
+#include "login.cpp"
 #define MAX_SIZE 10
-#define DEBUG 1
+#define DEBUG 0
 using namespace std;
 
 
@@ -38,7 +39,7 @@ int main(int argc , char *argv[]){
     /* Initializations */
     std::queue <char *> qs[10];
 
-    bzero(qs,sizeof(queue<char *>)*sizeof(char *)); 
+    //bzero(qs,sizeof(queue<char *>)*sizeof(char *)); 
     int sock , client_sock , c , *new_sock;
     struct sockaddr_in server , client;
     bzero((char *)&server,sizeof(server));
@@ -65,7 +66,7 @@ int main(int argc , char *argv[]){
         new_sock = (int *)malloc(1);    // Allocate space
         *new_sock = client_sock; // Duplicae address
 
-       char * user_name = "Ben";
+       char * user_name;// = "Ben";
 
        map <char *, queue <char *> *> users; 		   
        arg_t args {
@@ -96,10 +97,48 @@ void *connection_handler(void *_args){
     int sock = args->sock;
     char * to_be_written,user;  // This is going to be what we need to write to the users queue
     char * to_be_recieved; // This is what we need to send to our client (messages from others in their queue)
-    ssize_t read_size;
-    char *message , client_message[BUFSIZ];
+    ssize_t read_size = BUFSIZ;
+    char *message;
+    char client_message[BUFSIZ];
+	
+    // Get username
+    recv(sock, (void *)client_message, BUFSIZ, 0);
+    char username[BUFSIZ]; 
+    strcpy(username, client_message);
+    //printf("Received username: %s\n", client_message);
+    char password[BUFSIZ]; 
+    if (loginUser(username, password) == 1) {
+	strcpy(client_message, "Please enter your password: ");
+	send(sock, (void *)client_message, BUFSIZ, 0);
+	// Get response
+    	bzero(&client_message, BUFSIZ);	
+    	recv(sock, (void *)client_message, BUFSIZ, 0);
+	while (strncmp(client_message, password, strlen(password)) != 0) {
+    		bzero(&client_message, BUFSIZ);	
+		strcpy(client_message, "Invalid password.");
+		send(sock, (void *)client_message, BUFSIZ, 0);
+    		bzero(&password, BUFSIZ);	
+    		recv(sock, (void *)password, BUFSIZ, 0);
+	}
+	// Successful login
+	strcpy(client_message, "ACK_LOG");
+	send(sock, (void *)client_message, BUFSIZ, 0);
+    }
+    else {
+	bzero(&client_message, BUFSIZ);	
+	strcpy(client_message, "Please enter a password: ");
+	send(sock, (void *)client_message, BUFSIZ, 0);
+	// Get response
+    	bzero(&password, BUFSIZ);	
+    	recv(sock, (void *)password, BUFSIZ, 0);
+	handleNewUser(username, password);
+	bzero(client_message, BUFSIZ);
+	strcpy(client_message, "ACK_REG"); // Acknowledge registration of new user
+	send(sock, (void *)client_message, BUFSIZ, 0);
+    }
+
+
     bool mode = false; // This value is going to determine whether to write to the queues of read from them
-		       // Kinda lost about ideas on that tho so pls add whatever makes sense to you
 
     /* Casts vals back from void */
     queue <char *> *copy_q[10]; 
@@ -109,7 +148,16 @@ void *connection_handler(void *_args){
     ;
     char * user_name = args->user;
     map<char *,queue<char *> *> copy_map = *(map<char *,queue<char *> *> *)args->user_map;
-    queue <char *> *user_q = copy_map[user_name];
+    queue <char *> *user_q = copy_map[user_name]; // Update tracking of logged in clients
+
+    while (recv(sock, (void *)client_message, BUFSIZ, 0)) {
+	if (strcmp(client_message, "E") == 0) {
+		close(sock); // Close socket fd
+		copy_map[user_name] = NULL; // Update tracking
+		void * ptr = NULL;
+		return ptr;
+	}
+    }
 
     if(mode){
 	    for (int i = 0; i < MAX_SIZE; i++){

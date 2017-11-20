@@ -28,12 +28,14 @@ Client::Client(const char *host, const char *port, const char *cid){
 
   pthread_mutex_init(&(this->bool_lock1), NULL);
   pthread_mutex_init(&(this->bool_lock2), NULL);
-
+  this->client_fd = 0;
 }
 
 Client::~Client() {}
 
-
+int Client::getFd() {
+    return this->client_fd;
+}
 
 
 // the run function starts and joins the sender and receiver threads
@@ -58,7 +60,8 @@ bool Client::shutdown(){
 void Client::sendToServer(FILE * socketnum, char * buffer){
   // if fprintf returns an error display this and exit
   if (fprintf(socketnum, buffer) < 0) {
-    std::cerr << "fprintf failed" << std::endl;
+    //std::cerr << "fprintf failed:" << strerror(errno) << std::endl;
+    printf("fprintf failed\n");
     exit(1);
   }
 }
@@ -114,6 +117,8 @@ FILE * Client::socket_connect(const char *host, const char *port){
    client_fd = -1;
    continue;
  }
+ this->client_fd = client_fd;
+ return fdopen(client_fd, "r+");
 }
 }
  void * receiver(void * arg) {

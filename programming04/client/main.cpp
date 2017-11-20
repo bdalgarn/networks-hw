@@ -35,25 +35,38 @@ int main(int argc, char * argv[]){
   }
 
   char buffer[BUFSIZ];
-  sprintf(buffer, "%s\n", client_id);
+  sprintf(buffer, "%s", client_id);
   client.sendToServer(server_file, buffer);
-
+  bzero(buffer, BUFSIZ);
   client.recvFromServer(server_file, buffer);
-  fprintf(stdout, "%s\n", buffer);
+  fprintf(stdout, "%s", buffer);
   if (fgets(buffer, BUFSIZ, stdin) == NULL){
     fprintf(stderr, "Failed to recieve response\n");
     exit(1);
   }
-  client.sendToServer(server_file, buffer);
+  // Send password
+  //client.sendToServer(server_file, buffer);
   char recBuffer[BUFSIZ];
-  client.recvFromServer(server_file, recBuffer);
-  while(strcmp(recBuffer, "Invalid Password.")){
-    fprintf(stdout, "Try Again, wrong password:\n");
-    fgets(buffer, BUFSIZ, stdin);
-    client.sendToServer(server_file, buffer);
-    client.recvFromServer(server_file, recBuffer);
-  } 
-
+  send(client.getFd(), (void *)buffer, BUFSIZ, 0); 
+  bzero(recBuffer, BUFSIZ);
+  //client.recvFromServer(server_file, recBuffer);
+  recv(client.getFd(), (void *)recBuffer, BUFSIZ, 0); 
+  if (strcmp(recBuffer, "ACK_REG") == 0) {
+	printf("Successfully registered\n");
+  }
+  else {
+    while(strcmp(recBuffer, "Invalid Password.") == 0){
+      bzero(recBuffer, BUFSIZ);
+      fprintf(stdout, "Try Again, wrong password:\n");
+      fgets(buffer, BUFSIZ, stdin);
+      send(client.getFd(), (void *)buffer, BUFSIZ, 0); 
+      recv(client.getFd(), (void *)recBuffer, BUFSIZ, 0); 
+    } 
+    // Receive ack
+    bzero(recBuffer, BUFSIZ);
+    //recv(client.getFd(), (void *)recBuffer, BUFSIZ, 0); 
+    printf("%s\n", recBuffer);
+  }
   client.run();
 
   char user_id[BUFSIZ];
@@ -62,10 +75,11 @@ int main(int argc, char * argv[]){
   bool operationCompleted = false;
   char incBuffer[BUFSIZ];
   while (!client.shutdown()){
-     fprintf(stdout,"Choose an Operation:\n\tB: Message Broadcasting\n\tP: Private Messaging\n\tE: Exit\n");
+     printf("Choose an Operation:\n\tB: Message Broadcasting\n\tP: Private Messaging\n\tE: Exit\n");
      bzero(buffer, BUFSIZ);
      fgets(buffer, BUFSIZ, stdin);
-     client.sendToServer(server_file, buffer);
+     //client.sendToServer(server_file, buffer);
+     send(client.getFd(), (void *)buffer, BUFSIZ, 0); 
      
 
      if(strcmp(buffer,"B") == 0){
@@ -135,7 +149,7 @@ int main(int argc, char * argv[]){
 	    }
 	  }
       }
-	else if (strcmp(buffer,"E") == 0){
+	else if (strncmp(buffer,"E", 1) == 0){
 	  client.shutdownVal = true;
 	}
 	else {

@@ -38,6 +38,8 @@ class Client {
 	FILE * socket_connect(const char *, const char *);
 	Queue<char *> incoming;
 	bool shutdownVal;
+        int getFd();
+        int client_fd;
 
     private:
         std::string user_id; // value that stores the name of the user
