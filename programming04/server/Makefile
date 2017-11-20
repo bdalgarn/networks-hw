@@ -19,4 +19,4 @@ tmp: server_tmp.cpp
 
 clean:
 	@echo Cleaning...
-	@rm -f $(TARGETS) *.o *.log *.input
+	@rm -f $(TARGETS) *.o *.log *.input chatserver_tmp chatserver
