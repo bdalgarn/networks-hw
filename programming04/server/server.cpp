@@ -133,7 +133,7 @@ char * get_mesage(int *sock, int mode){
 void read_it(queue <char *> &messages, int sock){	
     char * to_send = messages.pop();
     /* Send Probe */
-    ssize_t size = send(sock,buf,sizeof(buf),0);
+    ssize_t size = send(sock,to_send,sizeof(to_send),0);
     bzero(cat,sizeof(cat));
     if (DEBUG==1) checkerror(size); 
 }
