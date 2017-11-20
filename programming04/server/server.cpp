@@ -25,8 +25,6 @@ int main(int argc , char *argv[]){
     /* Initializations */
     queue <char *> qs[10];
     bzero(qs,sizeof(queue)*sizeof(char *));
-
-
     int sock , client_sock , c , *new_sock;
     struct sockaddr_in server , client;
     bzero((char *)&server,sizeof(server));
@@ -50,14 +48,6 @@ int main(int argc , char *argv[]){
     /* Accept on Socket */
     while((client_sock=accept(sock,(struct sockaddr *)&client,(socklen_t*)&c))){
         pthread_t client_thread;
-
-	/* Here is where we are going to have to open up sockets based
- *      on a sort of ACK-oriented policy handlers.
- *
- *      1. Open up UDP port
- *      2. Recieve client's initial ""
- *
- */
         new_sock = malloc(1);    // Allocate space
         *new_sock = client_sock; // Duplicae address
 
@@ -68,14 +58,12 @@ int main(int argc , char *argv[]){
 		map <char *, queue <char *> *> user_map = &users; 		   
 		int sock = new_sock;
        };
-
         /* Creates New Thread */
         if(pthread_create(&client_thread,NULL,connection_handler,(void*)args)<0){
             perror("could not create thread");
             return 1;
         }
      }
-
     /* Check Error */
     if (client_sock < 0){
         perror("accept failed");
@@ -105,15 +93,14 @@ void *connection_handler(void *args){
     map<char *,queue *> copy_map = (map<char *,queue *> *)args->user_map;
     queue <char *> user_q = &(queue <char *>)copy_map[user_name];
 
-    /* Finds user's queue */
-    for (int i = 0; i < MAX_SIZE; i++){
-	 if (&copy_q[i]==user_q){
-		if (mode){     /*Read from Queue & Send to Client */
+    if(mode){
+	    for (int i = 0; i < MAX_SIZE; i++){
+		 if (&copy_q[i]==user_q){
 		   read_it(*user_q,(int*)args->sock);
-		}else (!mode){ /* Write to Queue */
-		   write_it(copy_q,user_name,copy_map,(int*)args->sock);
 		}
-	 }
+	    }
+    }else{    
+	   write_it(copy_q,user_name,&opy_map,(int*)args->sock);
     }
 }
 
@@ -123,9 +110,9 @@ char * get_mesage(int *sock, int mode){
     /* Build Probe */
     char * buf;
     if (mode==1){
-       buf = "Please Enter Your Message : ";
+       buf = "P,Server,Please Enter Your Message : ";
     }else if (mode==0){
-       buf = "Please Enter Recipient : ";
+       buf = "P,Server,Please Enter Recipient : ";
     }else{
        return NULL;
     }
@@ -143,12 +130,33 @@ char * get_mesage(int *sock, int mode){
     return cat;
 }
 
-void read_it(queue <char *> messages, int sock){	
-	char * to_send = messages.pop();
-	    /* Send Probe */
-	    ssize_t size = send(sock,buf,sizeof(buf),0);
-	    bzero(cat,sizeof(cat));
-	    if (DEBUG==1) checkerror(size); 
+void read_it(queue <char *> &messages, int sock){	
+    char * to_send = messages.pop();
+    /* Send Probe */
+    ssize_t size = send(sock,buf,sizeof(buf),0);
+    bzero(cat,sizeof(cat));
+    if (DEBUG==1) checkerror(size); 
+}
+
+char * format_msg(char * user,int mode,char *data,map<char *,queue *> dict){
+     char *formatted_str[BUFSIZ*4];
+     if (mode==0){ // Message Handler
+           strcat(formatted_str,'C');
+	   strcat(formatted_str,',');
+           strcat(formatted_str,user);
+           strcat(formatted_str,',');
+           strcat(formatted_str,data); 
+     }else if (mode==1){ // List handler
+	   strcat(formatted_str,'C');
+           map<char *,queue *>::iterator it;
+           for (it=dict.begin(); it !=dict.end();it++){
+		if (it->second!=NULL){
+           		strcat(formatted_str,',');
+           		strcat(formatted_str,it->first);
+	        }
+	   } 
+     }
+     return formatted_str;
 }
 
 
@@ -157,35 +165,40 @@ void write_it(queue <char *>  qs, char * user, map<char *,queue *> dict, int *sf
     int sock = *sfd;
     ssize_t read_size;
     char *message, client_message[BUFSIZ], recipient[BUFSIZ];
-    char *cat_buf[BUFSIZ*4];
+    char *cat_buf[BUFSIZ*4],formatted_buf[BUFSIZ*4];
 
     /* Read Message Type */
     read_size = recv(sock ,client_message,BUFSIZ,0));
     if (DUBUG==1) checkerror(read_size);
+    bzero(client_message,sizeof(client_message));
 
     switch(client_message[0]){
        case 'B': /* Broadcast Message */
            cat_buf = get_message(sock,1); 
            for (int i = 0; i < MAX_SIZE; i++){
               if (&qs[i]!=&dict[user]){
-		  qs[i].push(cat_buf);
+                  formatted_buf = format_msg(user,0,cat_buf,dict);
+		  qs[i].push(formatted_buf);
 	      }
 	   } 
 	   break;
-
+       case 'L': /* Personal Message */
+	   formatted_buf = format_msg(user,1,NULL,dict);
+    	   read_size = send(sock,formatted_buf,sizeof(formatted_buf),0);
        case 'P': /* Personal Message */
            recipient = get_message(sock,0);
 	   cat_buf = get_message(sock,1);
-           strcat(cat_buf,recipient);
            for (int i = 0; i < MAX_SIZE; i++){
               if (&qs[i]==&dict[recipient]){
-		  qs[i].push(cat_buf);
+                  formatted_buf = format_msg(user,0,cat_buf,dict){
+		  qs[i].push(formatted_buf);
 	      }
 	   }
            break;
 
        case 'E': /* Cleanup Message */
            fprintf(stdout,"Peace fam\n");	   
+           dict[user] = NULL;
            break;
 
        default:
