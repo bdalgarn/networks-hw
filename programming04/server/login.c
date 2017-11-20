@@ -1,3 +1,12 @@
+/*                   
+Brianna Hoelting bhoeltin
+Anthony DiFalco adifalco 
+Ben Dalgarn bdalgarn 
+
+This is the file that handles the login/ registration of the users for the communication. It contains the functions that will create a new user if necessary and will ensure that the password is correct for an existing user. 
+
+*/
+
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>

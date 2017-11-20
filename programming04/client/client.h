@@ -1,4 +1,14 @@
 // client.h: PS Client Library -------------------------------------------------
+/*                   
+Brianna Hoelting bhoeltin 
+Anthony DiFalco adifalco  
+Ben Dalgarn bdalgarn 
+
+This is the header file for the client class. It has many public functions that enable it to communicate with the server as well as connect to the server. Additionally it has many private variables that keep track of important information for communication and message parsing/recieving. 
+
+
+*/
+
 
 #pragma once
 

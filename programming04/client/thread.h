@@ -1,4 +1,12 @@
 // thread.h: PS Thread Library -------------------------------------------------
+/*                   
+Brianna Hoelting bhoeltin
+Anthony DiFalco adifalco 
+Ben Dalgarn bdalgarn 
+
+This is the header file for the thread class. 
+
+*/
 
 #pragma once
 

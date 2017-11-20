@@ -1,4 +1,14 @@
 // thread.cpp
+/*                   
+Brianna Hoelting bhoeltin
+Anthony DiFalco adifalco 
+Ben Dalgarn bdalgarn 
+
+
+This is the implmentation of the thread class. It uses pthread to create and maintian the threads. 
+
+
+*/
 
 #include <iostream>
 #include <stdio.h>
