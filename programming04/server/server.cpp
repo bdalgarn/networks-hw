@@ -130,16 +130,16 @@ char * get_message(int sock, int mode){
     /* Build Probe */
     char * buf;
     if (mode==1){
-       buf = "P,Server,Please Enter Your Message : ";
+       strcpy(buf, "P,Server,Please Enter Your Message : ");
     }else if (mode==0){
-       buf = "P,Server,Please Enter Recipient : ";
+       strcpy(buf, "P,Server,Please Enter Recipient : ");
     }else{
        return NULL;
     }
     /* Send Probe */
-    ssize_t size = send(sock,buf,sizeof(buf),0);
+    ssize_t size = send(sock,(void *)buf,sizeof(buf),0);
     char *cat = (char *)malloc(BUFSIZ*4);
-    bzero(cat,sizeof(*cat));
+    bzero(cat,BUFSIZ*4);
     if (DEBUG==1) check_error(size);
     /* Get Message */
     char client_message[BUFSIZ];
