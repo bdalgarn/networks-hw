@@ -14,10 +14,9 @@
 #include <map>
 #include <vector>
 #include <iostream>
-#include "ps_client/client.h"
-#include "ps_client/callback.h"
-#include "ps_client/thread.h"
-#include "ps_client/queue.h"
+#include "client.h"
+#include "thread.h"
+#include "queue.h"
 
 // the client constructor initializes the private variables and the locks
 Client::Client(const char *host, const char *port, const char *cid){
@@ -35,19 +34,6 @@ Client::Client(const char *host, const char *port, const char *cid){
 Client::~Client() {}
 
 
-// the publish function creates publish messages to send to the server
-void Client::publish(const char * topic, const char * message, size_t length){
-  Message m;
-  std::string top(topic); // converts char * topic to string
-  std::string bod(message, length); // converts char * message to string
-  // sets all of the members of the message object
-  m.type = "PUBLISH";
-  m.topic = top;
-  m.body = bod;
-  m.sender = cid;
-  this->outgoing.push(m); // pushes the publish message to the outgoing queue
-
-}
 
 
 // the run function starts and joins the sender and receiver threads
@@ -57,7 +43,6 @@ void Client::run(){
   thread1.start(receiver,this);
   thread1.detach();
 
-  std::map<std::string,Callback *>::iterator it;
 }
  // the shutdown function simply returns the value of shutdownVal
 bool Client::shutdown(){
@@ -101,6 +86,65 @@ const char * Client::getPort(){
 const char * Client::getCid(){
   return cid;
 }
+
+
+FILE * Client::socket_connect(const char *host, const char *port){
+  struct addrinfo *results;
+
+  struct addrinfo hints = {};
+  hints.ai_family = AF_UNSPEC;     /* Return IPv4 and IPv6 choices */
+  hints.ai_socktype = SOCK_STREAM; /* Use TCP */
+
+  int status;
+  if((status = getaddrinfo(host, port, &hints, &results)) != 0){ // gets the address info using the socket information
+  fprintf(stderr, "getaddrinfo failed: %s\n", gai_strerror(status)); // outputs an error message if getaddrinfo failed                                                                                                                   
+  return NULL;
+  }
+
+  int client_fd = -1;
+  for(struct addrinfo *p = results; p != NULL && client_fd < 0; p=p->ai_next){ // for loop that goes through the results of addrinfo and creates sockets                                                                                   
+  if((client_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0){ // allocates the socket               
+    fprintf(stderr, "Unable to make socket: %s\n", strerror(errno)); // outputs an error message if could ot create socket                                                                                                               
+   continue;
+  }
+
+/* Connect to host */
+ if(connect(client_fd, p->ai_addr, p->ai_addrlen) < 0){ // connects the socket                                     
+   close(client_fd); // if the socket doesn't connect close it                                                     
+   client_fd = -1;
+   continue;
+ }
+}
+}
+ void * receiver(void * arg) {
+    Client * client = (Client * ) arg; // creates a Client object                                                       
+
+    FILE *server_file = client->socket_connect(client->getHost(), client->getPort()); // calls socket_connect to create the socket                                                                                                                   
+  // if server_file is NULL then the socket connection didn't work and an error message is printed                    
+  if (server_file == NULL) {
+    std::cerr << "Socket connection failed" << std::endl;
+    exit(1);
+  }
+
+//client->identify(server_file); // call the identify function                                                      
+
+
+// while loop that runs as long as the client isn't supposed to shut down                                           
+ while(!client->shutdown()){
+
+   char returnBuffer[BUFSIZ];
+   // gets the response from the server and creates a RETRIEVE message if there is a message to receive              
+   if (fgets(returnBuffer, BUFSIZ, server_file) != NULL){
+     client->incoming.push(returnBuffer);
+   }
+ }
+
+ int * p = new int; // use this to set the value of the void *                                                       
+ void * retval = p; // have to return a void * from the function                                                     
+ fclose(server_file); // close the socket connection                                                                 
+ delete p; // need to delete the int that was allocated                                                              
+ return retval;
+  }
 
 
 

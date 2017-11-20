@@ -1,39 +1,32 @@
-CXX             = g++
-CXXFLAGS        = -g -gdwarf-2 -std=gnu++11 -Wall
-LD              = g++
-LDFLAGS         = -Llib
-LNKFLAGS        = -lpthread
+CC=		g++
+CFLAGS=		 -ggdb  -Wall -std=gnu++11
+LD=		g++
+LDFLAGS=	-L.
+TARGETS=	chatclient\
+		main.o\
+		client.o\
+		thread.o
 
+all:		$(TARGETS)
 
-# These are macros to build the client static library.
-CLIENT_SOURCE   = $(wildcard *.cpp)
-CLIENT_OBJECTS  = $(CLIENT_SOURCE:.cpp=.o)
-CLIENT          = lib/libps_client.a
+chatclient: main.o thread.o client.o 
+	@echo "Linking $@..."
+	@$(LD) $(LDFLAGS) -lpthread -o chatclient main.o client.o thread.o
 
-CHAT_LNK_FLAGS   = $(LNKFLAGS) -lps_client
-CHAT_SOURCE      = main.cpp
-CHAT_OBJECTS     = $(CHAT_SOURCE:.cpp=.o)
-CHAT             = chatclient
+main.o: main.cpp client.h thread.h
+	$(CXX) $(CXXFLAGS) -c main.cpp
 
+client.o:	client.cpp
+	@echo "Compiling $@..."
+	@$(CC) $(CFLAGS) -c -o client.o client.cpp
 
-TARGETS         = $(CLIENT) $(CHAT)
+thread.o:       thread.cpp
+	@echo "Compiling $@..."
+	@$(CC) $(CFLAGS) -c -o thread.o thread.cpp
 
-all:            $(TARGETS)
+clean: 
+	@echo Cleaning...
+	@rm -f $(TARGETS) *.o *.log *.input
 
-$(CLIENT):      $(CLIENT_OBJECTS)
-	$(AR) $(ARFLAGS) $@ $^
-
-client/%.o: %.cpp $(wildcard ps_client/*.h)
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
-
-$(CHAT):         $(CHAT_OBJECTS) $(CLIENT)
-	$(LD) -o $@ $(CHAT_OBJECTS) $(LDFLAGS) $(CHAT_LNK_FLAGS)
-
-main.o:    main.cpp $(wildcard ps_client/*.h)
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
-
-clean:
-	rm -fr build $(TARGETS) $(CLIENT_OBJECTS) $(CHAT_OBJECTS)
-
-.PHONY: all clean
+.PHONY:		all clean
 

@@ -16,7 +16,6 @@
 #include <queue>
 #include <map>
 #include "queue.h"
-#include "callback.h"
 #include <vector>
 
 typedef void *(*thread_func)(void *); // creates the function declaration
