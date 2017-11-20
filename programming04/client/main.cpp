@@ -60,13 +60,15 @@ int main(int argc, char * argv[]){
   bzero(recBuffer, BUFSIZ);
   //client.recvFromServer(server_file, recBuffer);
   recv(client.getFd(), (void *)recBuffer, BUFSIZ, 0); 
+  printf("Recieved Buffer: %s\n", recBuffer);
   if (strcmp(recBuffer, "ACK_REG") == 0) {
 	printf("Successfully registered\n");
   }
   else {
-    while(strcmp(recBuffer, "Invalid Password.") == 0){
+    while(strcmp(recBuffer, "Invalid password.") == 0){
       bzero(recBuffer, BUFSIZ);
       fprintf(stdout, "Try Again, wrong password:\n");
+      bzero(buffer,BUFSIZ);
       fgets(buffer, BUFSIZ, stdin);
       send(client.getFd(), (void *)buffer, BUFSIZ, 0); 
       recv(client.getFd(), (void *)recBuffer, BUFSIZ, 0); 
@@ -94,19 +96,19 @@ int main(int argc, char * argv[]){
      // user wants to broadcast
      if(strncmp(buffer,"B",1) == 0){
 
-       while(client.incoming.getSize() < 1) ;
+       while(client.incoming.getSize() < 1 ) ;
 
        sprintf(incBuffer, "%s", client.incoming.pop());
        printf("1: %s\n",incBuffer);
        sprintf(incBuffer, "%s", client.incoming.pop());
        printf("2: %s\n", incBuffer);
-        if(incBuffer[1] == 'P'){
+        if(incBuffer[0] == 'P'){
        //this will allow the program to see if any interrupting messages are recieved
 	  while(!operationCompleted){ 
 	    fprintf(stdout,"Enter Message to send:\n");
 	    sprintf(incBuffer, "%s", client.incoming.pop());
 	    // if the message in the incoming buffer is a message recieved by the server
-	    if (incBuffer[1] == 'C') {
+	    if (incBuffer[0] == 'C') {
 	      sscanf(incBuffer, "C,%s,%s", user_id, message);
 	      fprintf(stdout, "### New Message: Message recieved from %s: %s ###", user_id, message);
 	      continue;
@@ -126,13 +128,13 @@ int main(int argc, char * argv[]){
  	  while(!operationCompleted){
 	    sprintf(incBuffer, "%s", client.incoming.pop());
 	    // content message was recieved
-	    if (incBuffer[1] == 'C') {
+	    if (incBuffer[0] == 'C') {
 	      sscanf(incBuffer, "C,%s,%s", user_id, message);
 	      fprintf(stdout, "### New Message: Message recieved from %s: %s ###", user_id, message);
 	       continue;
 	    }
 	    // this is if the server sends a list of users
-	    else if (incBuffer[1] == 'L'){
+	    else if (incBuffer[0] == 'L'){
 	      char list[BUFSIZ];
 	      sscanf(incBuffer, "L, %s", list);
 	      fprintf(stdout, "Users online: %s", list);
@@ -142,13 +144,13 @@ int main(int argc, char * argv[]){
 	  while(!operationCompleted){
 	    fprintf(stdout,"Which online user would you like to send to?\n");
 	    sprintf(incBuffer, "%s", client.incoming.pop());
-	    if (incBuffer[1] == 'C') {
+	    if (incBuffer[0] == 'C') {
 	      sscanf(incBuffer, "C,%s,%s", user_id, message);
               fprintf(stdout, "### New Message: Message recieved from %s: %s ###", user_id, message);
 	      continue;
 	    }
 	    // server prompts client for user to send message to
-	     else if(incBuffer[1] == 'P'){
+	     else if(incBuffer[0] == 'P'){
 		fgets(buffer, BUFSIZ, stdin);
 		client.sendToServer(server_file, buffer);
 		break;
@@ -158,13 +160,13 @@ int main(int argc, char * argv[]){
 	  while(!operationCompleted){
 	    fprintf(stdout,"Message\n");
 	    sprintf(incBuffer, "%s", client.incoming.pop());
-	    if (incBuffer[1] == 'C') {
+	    if (incBuffer[0] == 'C') {
 	      sscanf(incBuffer, "C,%s,%s", user_id, message);
               fprintf(stdout, "### New Message: Message recieved from %s: %s ###", user_id, message);
 	      continue;
 	     }
 	    // server prompts user for message to send
-	     else if(incBuffer[1] == 'P'){
+	     else if(incBuffer[0] == 'P'){
 		fgets(buffer, BUFSIZ, stdin);
 		client.sendToServer(server_file, buffer);
 		client.recvFromServer(server_file, recBuffer);

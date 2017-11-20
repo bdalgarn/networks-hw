@@ -133,22 +133,14 @@ FILE * Client::socket_connect(const char *host, const char *port){
 }
  void * receiver(void * arg) {
     Client * client = (Client * ) arg; // creates a Client object                                                       
-
-    //    FILE *server_file = client->socket_connect(client->getHost(), client->getPort()); // calls socket_connect to create the socket                                                                                                                   
-  // if server_file is NULL then the socket connection didn't work and an error message is printed                    
-     /* if (server_file == NULL) {
-    std::cerr << "Socket connection failed" << std::endl;
-    exit(1);
-  }*/
-
-//client->identify(server_file); // call the identify function                                                      
-
+    printf("in reciever 1\n");
 
 // while loop that runs as long as the client isn't supposed to shut down                                           
  while(!client->shutdown()){
 
    char returnBuffer[BUFSIZ];
    bzero(returnBuffer, BUFSIZ);
+   printf("in reciever\n");
    // gets the response from the server and creates a RETRIEVE message if there is a message to receive              
    if (recv(client->getFd(), returnBuffer, BUFSIZ, 0) > 0){
      client->incoming.push(returnBuffer);
