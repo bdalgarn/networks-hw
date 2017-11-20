@@ -10,8 +10,13 @@ all:            $(TARGETS)
 
 server: server.cpp
 	@echo "Linking $@..."
-	g++ -pthread -ggdb -std=gnu++11 -o chatserver server.cpp
+	g++ -pthread -std=gnu++11 -ggdb -o chatserver server.cpp
+
+tmp: server_tmp.cpp
+	@echo "Linking $@..."
+	g++ -pthread -std=c++0x -ggdb -o chatserver_tmp server_tmp.cpp
+
 
 clean:
 	@echo Cleaning...
-	@rm -f $(TARGETS) *.o *.log *.input
+	@rm -f $(TARGETS) *.o *.log *.input chatserver_tmp chatserver
