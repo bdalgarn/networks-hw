@@ -14,7 +14,7 @@ server: server.cpp
 
 tmp: server_tmp.cpp
 	@echo "Linking $@..."
-	g++ -pthread -std=c++0x -ggdb -o chatserver server_tmp.cpp
+	g++ -pthread -std=c++0x -ggdb -o chatserver_tmp server_tmp.cpp
 
 
 clean:
