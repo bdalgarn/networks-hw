@@ -18,7 +18,7 @@ This is the implementation of the server. It will interact with the client and p
 #include <errno.h>
 #include <map>
 #include <queue>
-#include "login.c"
+#include "login.cpp"
 #define MAX_SIZE 10
 #define DEBUG 0
 using namespace std;
@@ -117,6 +117,7 @@ void *connection_handler(void *_args){
     strcpy(username, client_message);
     //printf("Received username: %s\n", client_message);
     char password[BUFSIZ]; 
+    printf("here\n");
     if (loginUser(username, password) == 1) {
 	strcpy(client_message, "Please enter your password: ");
 	send(sock, (void *)client_message, BUFSIZ, 0);
@@ -186,7 +187,7 @@ void *connection_handler(void *_args){
 
 char * get_message(int sock, int mode){
     /* Build Probe */
-    char * buf;
+    char buf[BUFSIZ];
     if (mode==1){
        strcpy(buf, "P,Server,Please Enter Your Message : ");
     }else if (mode==0){
@@ -194,6 +195,7 @@ char * get_message(int sock, int mode){
     }else{
        return NULL;
     }
+    printf("%s\n", buf);
     /* Send Probe */
     ssize_t size = send(sock,(void *)buf,sizeof(buf),0);
     char *cat = (char *)malloc(BUFSIZ*4);
@@ -252,13 +254,15 @@ void write_it(queue <char *> ** qs, char * user, map<char *,queue<char *> *> * d
     char *cat_buf;
 
     /* Read Message Type */
+    bzero(client_message,BUFSIZ*4);
     read_size = recv(sock ,client_message,BUFSIZ,0);
     if (DEBUG==1) check_error(read_size);
-    bzero(client_message,BUFSIZ*4);
 
     switch(client_message[0]){
        case 'B': /* Broadcast Message */
+	 printf("in B\n");
            cat_buf = get_message(sock,1); 
+	   
            for (int i = 0; i < MAX_SIZE; i++){
               if (qs[i] != (*dict)[user]){
                   formatted_buf = format_msg(user,0,cat_buf,*dict);

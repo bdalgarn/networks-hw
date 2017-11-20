@@ -134,12 +134,12 @@ FILE * Client::socket_connect(const char *host, const char *port){
  void * receiver(void * arg) {
     Client * client = (Client * ) arg; // creates a Client object                                                       
 
-    FILE *server_file = client->socket_connect(client->getHost(), client->getPort()); // calls socket_connect to create the socket                                                                                                                   
+    //    FILE *server_file = client->socket_connect(client->getHost(), client->getPort()); // calls socket_connect to create the socket                                                                                                                   
   // if server_file is NULL then the socket connection didn't work and an error message is printed                    
-  if (server_file == NULL) {
+     /* if (server_file == NULL) {
     std::cerr << "Socket connection failed" << std::endl;
     exit(1);
-  }
+  }*/
 
 //client->identify(server_file); // call the identify function                                                      
 
@@ -148,15 +148,17 @@ FILE * Client::socket_connect(const char *host, const char *port){
  while(!client->shutdown()){
 
    char returnBuffer[BUFSIZ];
+   bzero(returnBuffer, BUFSIZ);
    // gets the response from the server and creates a RETRIEVE message if there is a message to receive              
-   if (fgets(returnBuffer, BUFSIZ, server_file) != NULL){
+   if (recv(client->getFd(), returnBuffer, BUFSIZ, 0) > 0){
      client->incoming.push(returnBuffer);
+     printf("pushing to incoming queue: %s\n", returnBuffer);
    }
  }
 
  int * p = new int; // use this to set the value of the void *                                                       
  void * retval = p; // have to return a void * from the function                                                     
- fclose(server_file); // close the socket connection                                                                 
+ //fclose(server_file); // close the socket connection                                                                 
  delete p; // need to delete the int that was allocated                                                              
  return retval;
   }

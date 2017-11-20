@@ -84,43 +84,44 @@ int main(int argc, char * argv[]){
   bool operationCompleted = false;
   char incBuffer[BUFSIZ];
   while (!client.shutdown()){
-<<<<<<< HEAD
-     printf("Choose an Operation:\n\tB: Message Broadcasting\n\tP: Private Messaging\n\tE: Exit\n");
-=======
-     
     // prompt for operation mode
     fprintf(stdout,"Choose an Operation:\n\tB: Message Broadcasting\n\tP: Private Messaging\n\tE: Exit\n");
->>>>>>> 69492bda0bd7e40dceec79929741959ba8dac8ab
      bzero(buffer, BUFSIZ);
      fgets(buffer, BUFSIZ, stdin);
      //client.sendToServer(server_file, buffer);
      send(client.getFd(), (void *)buffer, BUFSIZ, 0); 
-     
+
      // user wants to broadcast
-     if(strcmp(buffer,"B") == 0){
+     if(strncmp(buffer,"B",1) == 0){
+
+       while(client.incoming.getSize() < 1) ;
+
+       sprintf(incBuffer, "%s", client.incoming.pop());
+       printf("1: %s\n",incBuffer);
+       sprintf(incBuffer, "%s", client.incoming.pop());
+       printf("2: %s\n", incBuffer);
+        if(incBuffer[1] == 'P'){
        //this will allow the program to see if any interrupting messages are recieved
-       while(!operationCompleted){ 
-	 fprintf(stdout,"Enter Message to send:\n");
-	 sprintf(incBuffer, "%s", client.incoming.pop());
-	 // if the message in the incoming buffer is a message recieved by the server
-	 if (incBuffer[1] == 'C') {
-	   sscanf(incBuffer, "C,%s,%s", user_id, message);
-	   fprintf(stdout, "### New Message: Message recieved from %s: %s ###", user_id, message);
-	   continue;
-	  }
-	 // if the message in the incoming buffer is an action to be taken by the client
-	 else if(incBuffer[1] == 'P'){
+	  while(!operationCompleted){ 
+	    fprintf(stdout,"Enter Message to send:\n");
+	    sprintf(incBuffer, "%s", client.incoming.pop());
+	    // if the message in the incoming buffer is a message recieved by the server
+	    if (incBuffer[1] == 'C') {
+	      sscanf(incBuffer, "C,%s,%s", user_id, message);
+	      fprintf(stdout, "### New Message: Message recieved from %s: %s ###", user_id, message);
+	      continue;
+	    }
 	    fgets(buffer, BUFSIZ, stdin);
 	    client.sendToServer(server_file, buffer);
 	    //confirmation message
 	    client.recvFromServer(server_file, recBuffer);
 	    fprintf(stdout, recBuffer);
 	    operationCompleted = true;
-	 }
-       }
+	    }
+	  }
      }      
      // user wants private mode
-      else if (strcmp(buffer,"P") == 0){
+     else if (strncmp(buffer,"P",1) == 0){
 	//while loops below ensure that interrupting messages are printed and do not disturb prompting of user
  	  while(!operationCompleted){
 	    sprintf(incBuffer, "%s", client.incoming.pop());
