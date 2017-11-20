@@ -1,3 +1,13 @@
+/*                   
+Brianna Hoelting bhoeltin
+Anthony DiFalco adifalco 
+Ben Dalgarn bdalgarn 
+
+This is the implementation of the server. It will interact with the client and perform different task based on what the client asks of it. It will give each client their messages as well as a list of online users if applicapble. 
+
+*/
+
+
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
