@@ -1,3 +1,13 @@
+/*
+Brianna Hoelting bhoeltin
+Anthony DiFalco adifalco
+Ben Dalgarn bdalgarn
+
+
+This is the implementaiton of the Client class. It contains all the functions necessary to connect and communicated to the client to the server and the function that will be used by another thread to recieve messages from the server. The reciever function recieves from the server and adds to an incoming queue that will be popped by the client in main. The Client class is instantiated in main.
+
+
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
