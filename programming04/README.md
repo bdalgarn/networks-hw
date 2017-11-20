@@ -1,6 +1,4 @@
-PUT YOUR NETID BELOW
-
-adifalco, | , |
+adifalco, bdalgarn , bhoeltin
 
 Both the server and client directories contain Makefiles necessary to compile
 a chat room application. The flow of the program is described below:
@@ -79,3 +77,9 @@ E:	Client sends operation (E) to close its connection with the server and end th
 	Client should close socket and return.
 
 ------------------------------------------------------------------------------------------------
+
+Build with 'make' in both client/ and server/.
+to run the client:
+	./chatclient Server_Name Port Username
+to runt the server:
+	./chatserver Port

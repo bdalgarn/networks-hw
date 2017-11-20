@@ -10,7 +10,7 @@ all:            $(TARGETS)
 
 server: server.cpp
 	@echo "Linking $@..."
-	g++ -pthread -ggdb -std=gnu++11 -o server server.cpp
+	g++ -pthread -ggdb -std=gnu++11 -o chatserver server.cpp
 
 clean:
 	@echo Cleaning...
