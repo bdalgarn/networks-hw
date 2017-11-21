@@ -27,8 +27,8 @@ using namespace std;
 
 void *connection_handler(void *);
 void read_it(queue <char *> *, int);	
-void write_it(char, queue <char *> **, char *, map<char *,queue<char *> *> *, int);
-char * get_message(int sock, int mode);
+void write_it(char, char *, map<char *,queue<char *> *> *, int);
+void get_message(int sock, int mode, char * message);
 void check_error(ssize_t size);
 
 std::map<char *,std::queue<char *> *> queues;
@@ -43,11 +43,12 @@ struct arg_t {
 //queue <queue<char *>> qs[10];
 //bzero(qs,sizeof(queue)*sizeof(char *));
 
+std::queue <char *> qs[10];
+int in_use[10] = {0};
 
 int main(int argc , char *argv[]){
 
     /* Initializations */
-    std::queue <char *> qs[10];
 
     //bzero(qs,sizeof(queue<char *>)*sizeof(char *)); 
     int sock , client_sock , c , *new_sock;
@@ -116,7 +117,7 @@ void *connection_handler(void *_args){
     recv(sock, (void *)client_message, BUFSIZ, 0);
     char username[BUFSIZ]; 
     strcpy(username, client_message);
-    //printf("Received username: %s\n", client_message);
+    printf("Received username: %s\n", username);
     char password[BUFSIZ]; 
     if (loginUser(username, password) == 1) {
 	strcpy(client_message, "Please enter your password: ");
@@ -152,47 +153,70 @@ void *connection_handler(void *_args){
     bool mode = false; // This value is going to determine whether to write to the queues of read from them
 
     /* Casts vals back from void */
-    queue <char *> *copy_q[10]; 
+    /*queue <char *> *copy_q[10]; 
     for (int i = 0; i < 10; i++) {
 	copy_q[i] = &((queue <char *> *)args->user_qs)[i];
+    }*/
+    //char * user_name = args->user;
+    // Find unused queue
+    int q_num = -1;
+    for (int i = 0; i < 10; i++) {
+	if (!in_use[i]) {
+		q_num = i;
+		break;
+	}
     }
-    ;
-    char * user_name = args->user;
-    map<char *,queue<char *> *> copy_map = *(map<char *,queue<char *> *> *)args->user_map;
-    queue <char *> *user_q = copy_map[user_name]; // Update tracking of logged in clients
+    map<char *,queue<char *> *> *map_ptr = (map<char *,queue<char *> *> *)args->user_map;
+    if (q_num >= 0) {
+	in_use[q_num] = 1;
+	(*map_ptr)[username] = &qs[q_num];
+    }
+    else {
+	void * return_ptr = NULL;
+	return return_ptr;
+    }	
+
+
 
     while (recv(sock, (void *)client_message, BUFSIZ, 0)) {
       printf("client message: %s\n", client_message);
       if (strncmp(client_message, "E", 1) == 0) {
 		close(sock); // Close socket fd
-		copy_map[user_name] = NULL; // Update tracking
+		for (int i = 0; i < 10; i++) {
+			if (&qs[i] == (*map_ptr)[username]) {
+				in_use[i] = 0;
+			}
+		}
+		map_ptr->erase(username);
 		void * ptr = NULL;
 		return ptr;
 	}
 	else if (strncmp(client_message, "B", 1) == 0) {
 	  printf("In B if statement\n");
-	  write_it('B', &copy_q[0],user_name,&copy_map,args->sock);
-	    }
+	  write_it('B',username,map_ptr,args->sock);
+	  break;
+	}
+
 	else if (strncmp(client_message, "P", 1) == 0) {
-          write_it('P', &copy_q[0],user_name,&copy_map,args->sock);
+          write_it('P',username,map_ptr,args->sock);
 	}
 	else printf("none\n");
     }
-
+	/*
     if(mode){
 	    for (int i = 0; i < MAX_SIZE; i++){
 		 if (copy_q[i]==user_q){
 		   read_it(user_q,args->sock);
 		}
 	    }
-    }
+    }*/
     void * return_ptr = NULL;
     return return_ptr;
 }
 
 
 
-char * get_message(int sock, int mode){
+void get_message(int sock, int mode, char * message){
     /* Build Probe */
     char buf[BUFSIZ];
     bzero(buf,BUFSIZ);
@@ -201,7 +225,6 @@ char * get_message(int sock, int mode){
     }else if (mode==0){
        strcpy(buf, "P,Server,Please Enter Recipient : ");
     }else{
-       return NULL;
     }
     printf("%s\n", buf);
     /* Send Probe */
@@ -213,11 +236,15 @@ char * get_message(int sock, int mode){
     /* Get Message */
     char client_message[BUFSIZ];
     ssize_t read_size;
-    while((read_size = recv(sock,client_message,BUFSIZ,0))>0){
+    /*
+    if ((read_size = recv(sock,client_message,BUFSIZ,0)) > 0){
 	strcat(cat,client_message);
-    }
+    }*/
+    bzero(client_message, BUFSIZ);
+    recv(sock,client_message,BUFSIZ,0);
+    printf("Broadcast mssg: %s\n", client_message);
+    strcpy(message, client_message);
     if (DEBUG==1) check_error(read_size);
-    return cat;
 }
 
 void read_it(queue <char *> * _messages, int sock){	
@@ -254,29 +281,36 @@ char * format_msg(char * user,int mode,char *data,map<char *,queue<char *> *> di
 }
 
 
-void write_it(char client_message_input, queue <char *> ** qs, char * user, map<char *,queue<char *> *> * dict, int sfd) {
+void write_it(char client_message_input, char * user, map<char *,queue<char *> *> * dict, int sfd) {
     /* Inits */
     int sock = sfd;
     ssize_t read_size;
     char message[BUFSIZ];
     char client_message[BUFSIZ];
-char recipient[BUFSIZ];
+    char recipient[BUFSIZ];
     char formatted_buf[BUFSIZ];
     char cat_buf[BUFSIZ];
 
-
+    get_message(sock,1,cat_buf); // Puts formatted mssg in cat_buf 
+    // Parse username from message
+    printf("mssg: %s\n", cat_buf);
+    char * tok = strtok(cat_buf, ",");
+    user = strtok(NULL, ",");
+    printf("user: %s\n", user);
     /* Read Message Type */
    
-    printf("swithh: %c\n",client_message_input);
+    printf("switch: %c\n",client_message_input);
     switch(client_message_input){
        case 'B': /* Broadcast Message */
 	 printf("in B\n");
-	 strcpy(get_message(sock,1),cat_buf); 
-	   
+	 printf("message: %s\n", cat_buf);
+	 printf("dict[user]: %p\n", (*dict)[user]);
            for (int i = 0; i < MAX_SIZE; i++){
-              if (qs[i] != (*dict)[user]){
-		strcpy(format_msg(user,0,cat_buf,*dict), formatted_buf);
-		  qs[i]->push(formatted_buf);
+	      printf("%d\n", i);
+              if (&qs[i] != (queue<char *> *)((*dict)[user]) && in_use[i]){
+		strcpy(formatted_buf, format_msg(user,0,cat_buf,*dict));
+		printf("formatted buf: %s, user: %s\n", formatted_buf, user);
+		qs[i].push(formatted_buf);
 	      }
 	   } 
 	   break;
@@ -284,12 +318,12 @@ char recipient[BUFSIZ];
 	 strcpy(format_msg(user,1,NULL,*dict), formatted_buf);
     	   read_size = send(sock,formatted_buf,sizeof(formatted_buf),0);
        case 'P': /* Personal Message */
-	 strcpy(get_message(sock,0), recipient);
-	   strcpy(get_message(sock,1), cat_buf);
+	   get_message(sock,0, recipient);
+	   get_message(sock,1, cat_buf);
            for (int i = 0; i < MAX_SIZE; i++){
-              if (qs[i]==(*dict)[recipient]){
+              if (&qs[i]==(*dict)[recipient]){
 		strcpy(format_msg(user,0,cat_buf,*dict), formatted_buf);
-		  qs[i]->push(formatted_buf);
+		  qs[i].push(formatted_buf);
 	      }
 	   }
            break;

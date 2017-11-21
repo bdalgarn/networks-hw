@@ -100,23 +100,27 @@ int main(int argc, char * argv[]){
 
        sprintf(incBuffer, "%s", client.incoming.pop());
        printf("1: %s\n",incBuffer);
-       sprintf(incBuffer, "%s", client.incoming.pop());
-       printf("2: %s\n", incBuffer);
         if(incBuffer[0] == 'P'){
        //this will allow the program to see if any interrupting messages are recieved
 	  while(!operationCompleted){ 
-	    fprintf(stdout,"Enter Message to send:\n");
-	    sprintf(incBuffer, "%s", client.incoming.pop());
+	    char *tok = strtok(incBuffer,",");
+	    tok = strtok(NULL,",");
+	    tok = strtok(NULL,",");
+	    /*sprintf(incBuffer, "%s", client.incoming.pop());
 	    // if the message in the incoming buffer is a message recieved by the server
 	    if (incBuffer[0] == 'C') {
 	      sscanf(incBuffer, "C,%s,%s", user_id, message);
 	      fprintf(stdout, "### New Message: Message recieved from %s: %s ###", user_id, message);
 	      continue;
-	    }
+	    }*/
+	    // Show prompt
+	    printf("%s\n", tok);
+	    bzero(buffer, BUFSIZ);
 	    fgets(buffer, BUFSIZ, stdin);
-	    client.sendToServer(server_file, buffer);
+     	    send(client.getFd(), (void *)buffer, BUFSIZ, 0); 
 	    //confirmation message
-	    client.recvFromServer(server_file, recBuffer);
+	    //client.recvFromServer(server_file, recBuffer);
+	    recv(client.getFd(), (void *)recBuffer, BUFSIZ, 0);
 	    fprintf(stdout, recBuffer);
 	    operationCompleted = true;
 	    }
