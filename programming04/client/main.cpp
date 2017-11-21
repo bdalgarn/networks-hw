@@ -117,7 +117,13 @@ int main(int argc, char * argv[]){
 	    printf("%s\n", tok);
 	    bzero(buffer, BUFSIZ);
 	    fgets(buffer, BUFSIZ, stdin);
-     	    send(client.getFd(), (void *)buffer, BUFSIZ, 0); 
+	    char str_to_send[BUFSIZ]; // Create formatted string
+	    strcpy(str_to_send, "C,");
+	    strcat(str_to_send,client_id);
+	    strcat(str_to_send,",");
+	    strcat(str_to_send,buffer);
+	    printf("***str: %s\n", str_to_send);
+     	    send(client.getFd(), (void *)str_to_send, BUFSIZ, 0); 
 	    //confirmation message
 	    //client.recvFromServer(server_file, recBuffer);
 	    recv(client.getFd(), (void *)recBuffer, BUFSIZ, 0);

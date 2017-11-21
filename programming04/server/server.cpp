@@ -296,15 +296,16 @@ void write_it(char client_message_input, char * user, map<char *,queue<char *> *
     printf("mssg: %s\n", cat_buf);
     char * tok = strtok(cat_buf, ",");
     user = strtok(NULL, ",");
+    strcpy(message, strtok(NULL, ","));
     printf("user: %s\n", user);
     /* Read Message Type */
    
     printf("switch: %c\n",client_message_input);
     switch(client_message_input){
        case 'B': /* Broadcast Message */
-	 printf("in B\n");
-	 printf("message: %s\n", cat_buf);
+	 printf("message: %s\n", message);
 	 printf("dict[user]: %p\n", (*dict)[user]);
+	 printf("ben: %p\n", (*dict)["Ben"]);
            for (int i = 0; i < MAX_SIZE; i++){
 	      printf("%d\n", i);
               if (&qs[i] != (queue<char *> *)((*dict)[user]) && in_use[i]){
