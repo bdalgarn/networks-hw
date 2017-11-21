@@ -305,7 +305,6 @@ void write_it(char client_message_input, char * user, map<char *,queue<char *> *
        case 'B': /* Broadcast Message */
 	 printf("message: %s\n", message);
 	 printf("dict[user]: %p\n", (*dict)[user]);
-	 printf("ben: %p\n", (*dict)["Ben"]);
            for (int i = 0; i < MAX_SIZE; i++){
 	      printf("%d\n", i);
               if (&qs[i] != (queue<char *> *)((*dict)[user]) && in_use[i]){
