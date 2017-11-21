@@ -117,7 +117,7 @@ void *connection_handler(void *_args){
     recv(sock, (void *)client_message, BUFSIZ, 0);
     char username[BUFSIZ]; 
     strcpy(username, client_message);
-    printf("Received username: %s\n", username);
+    //printf("Received username: %s\n", username);
     char password[BUFSIZ]; 
     if (loginUser(username, password) == 1) {
 	strcpy(client_message, "Please enter your password: ");
@@ -179,7 +179,7 @@ void *connection_handler(void *_args){
 
 
     while (recv(sock, (void *)client_message, BUFSIZ, 0)) {
-      printf("client message: %s\n", client_message);
+      //printf("client message: %s\n", client_message);
       if (strncmp(client_message, "E", 1) == 0) {
 		close(sock); // Close socket fd
 		for (int i = 0; i < 10; i++) {
@@ -192,7 +192,7 @@ void *connection_handler(void *_args){
 		return ptr;
 	}
 	else if (strncmp(client_message, "B", 1) == 0) {
-	  printf("In B if statement\n");
+	  //printf("In B if statement\n");
 	  write_it('B',username,map_ptr,args->sock);
 	  break;
 	}
@@ -200,7 +200,7 @@ void *connection_handler(void *_args){
 	else if (strncmp(client_message, "P", 1) == 0) {
           write_it('P',username,map_ptr,args->sock);
 	}
-	else printf("none\n");
+	else; //printf("none\n");
     }
 	/*
     if(mode){
@@ -226,10 +226,10 @@ void get_message(int sock, int mode, char * message){
        strcpy(buf, "P,Server,Please Enter Recipient : ");
     }else{
     }
-    printf("%s\n", buf);
+    //printf("%s\n", buf);
     /* Send Probe */
     ssize_t size = send(sock,(void *)buf,sizeof(buf),0);
-    printf("%s\n", buf);
+    //printf("%s\n", buf);
     char * cat = (char *)malloc(BUFSIZ*4);
     bzero(cat,sizeof(cat));
     if (DEBUG==1) check_error(size);
@@ -242,7 +242,7 @@ void get_message(int sock, int mode, char * message){
     }*/
     bzero(client_message, BUFSIZ);
     recv(sock,client_message,BUFSIZ,0);
-    printf("Broadcast mssg: %s\n", client_message);
+    //printf("Broadcast mssg: %s\n", client_message);
     strcpy(message, client_message);
     if (DEBUG==1) check_error(read_size);
 }
@@ -293,23 +293,20 @@ void write_it(char client_message_input, char * user, map<char *,queue<char *> *
 
     get_message(sock,1,cat_buf); // Puts formatted mssg in cat_buf 
     // Parse username from message
-    printf("mssg: %s\n", cat_buf);
+    //printf("mssg: %s\n", cat_buf);
     char * tok = strtok(cat_buf, ",");
     user = strtok(NULL, ",");
     strcpy(message, strtok(NULL, ","));
-    printf("user: %s\n", user);
+    //printf("user: %s\n", user);
     /* Read Message Type */
    
-    printf("switch: %c\n",client_message_input);
     switch(client_message_input){
        case 'B': /* Broadcast Message */
-	 printf("message: %s\n", message);
-	 printf("dict[user]: %p\n", (*dict)[user]);
            for (int i = 0; i < MAX_SIZE; i++){
-	      printf("%d\n", i);
+	      //printf("%d\n", i);
               if (&qs[i] != (queue<char *> *)((*dict)[user]) && in_use[i]){
 		strcpy(formatted_buf, format_msg(user,0,cat_buf,*dict));
-		printf("formatted buf: %s, user: %s\n", formatted_buf, user);
+	//	printf("formatted buf: %s, user: %s\n", formatted_buf, user);
 		qs[i].push(formatted_buf);
 	      }
 	   } 

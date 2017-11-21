@@ -76,7 +76,7 @@ int main(int argc, char * argv[]){
     // Receive ack
     bzero(recBuffer, BUFSIZ);
     //recv(client.getFd(), (void *)recBuffer, BUFSIZ, 0); 
-    printf("%s\n", recBuffer);
+    //printf("%s\n", recBuffer);
   }
   client.run();
 
@@ -99,7 +99,7 @@ int main(int argc, char * argv[]){
        while(client.incoming.getSize() < 1 ) ;
 
        sprintf(incBuffer, "%s", client.incoming.pop());
-       printf("1: %s\n",incBuffer);
+       //printf("1: %s\n",incBuffer);
         if(incBuffer[0] == 'P'){
        //this will allow the program to see if any interrupting messages are recieved
 	  while(!operationCompleted){ 
@@ -114,7 +114,6 @@ int main(int argc, char * argv[]){
 	      continue;
 	    }*/
 	    // Show prompt
-	    printf("%s\n", tok);
 	    bzero(buffer, BUFSIZ);
 	    fgets(buffer, BUFSIZ, stdin);
 	    char str_to_send[BUFSIZ]; // Create formatted string
@@ -122,7 +121,7 @@ int main(int argc, char * argv[]){
 	    strcat(str_to_send,client_id);
 	    strcat(str_to_send,",");
 	    strcat(str_to_send,buffer);
-	    printf("***str: %s\n", str_to_send);
+	    //printf("***str: %s\n", str_to_send);
      	    send(client.getFd(), (void *)str_to_send, BUFSIZ, 0); 
 	    //confirmation message
 	    //client.recvFromServer(server_file, recBuffer);

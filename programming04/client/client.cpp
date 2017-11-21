@@ -71,7 +71,7 @@ void Client::sendToServer(FILE * socketnum, char * buffer){
   // if fprintf returns an error display this and exit
   if (fprintf(socketnum, buffer) < 0) {
     //std::cerr << "fprintf failed:" << strerror(errno) << std::endl;
-    printf("fprintf failed\n");
+    //printf("fprintf failed\n");
     exit(1);
   }
 }
@@ -133,18 +133,18 @@ FILE * Client::socket_connect(const char *host, const char *port){
 }
  void * receiver(void * arg) {
     Client * client = (Client * ) arg; // creates a Client object                                                       
-    printf("in reciever 1\n");
+    //printf("in reciever 1\n");
 
 // while loop that runs as long as the client isn't supposed to shut down                                           
  while(!client->shutdown()){
 
    char returnBuffer[BUFSIZ];
    bzero(returnBuffer, BUFSIZ);
-   printf("in reciever\n");
+   //printf("in reciever\n");
    // gets the response from the server and creates a RETRIEVE message if there is a message to receive              
    if (recv(client->getFd(), returnBuffer, BUFSIZ, 0) > 0){
      client->incoming.push(returnBuffer);
-     printf("pushing to incoming queue: %s\n", returnBuffer);
+     //printf("pushing to incoming queue: %s\n", returnBuffer);
    }
  }
 
